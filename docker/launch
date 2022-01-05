@@ -1,0 +1,38 @@
+#!/bin/bash
+
+if [ -f /.dockerenv ]; then
+    echo 'ALREADY IN DOCKER CONTAINER'
+    exit
+fi
+
+#REMOTEUID=$(ssh $1 '/usr/bin/id -u')
+#REMOTEHOME=$(ssh $1 'pwd')
+#echo "REMOTEUID ${REMOTEUID}"
+#echo "REMOTEHOME ${REMOTEHOME}"
+
+xhost +
+docker run \
+    --privileged \
+    --rm=true \
+    --interactive=true \
+    --tty=true \
+    --user=1000 \
+    --workdir=`pwd` \
+    --env="DISPLAY" \
+    --env="TZ=America/Los_Angeles" \
+    --net=host \
+    --volume="/etc/group:/etc/group:ro" \
+    --volume="/etc/passwd:/etc/passwd:ro" \
+    --volume="/etc/shadow:/etc/shadow:ro" \
+    --volume="/etc/sudoers.d:/etc/sudoers.d:ro" \
+    --volume="/tmp/.X11-unix:/tmp/.X11-unix:rw" \
+    --volume="/data:/data" \
+    --volume="/proj:/proj" \
+    --volume="/home:/home" \
+    --volume="/home2:/home2" \
+    --volume="/var/www/html:/var/www/html" \
+    --volume="/usr/local/MATLAB:/usr/local/MATLAB" \
+    --privileged -v /dev/bus/usb:/dev/bus/usb \
+    --sysctl kernel.shmmax=2147483648 \
+    life /bin/bash -i
+
