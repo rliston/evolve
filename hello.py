@@ -50,7 +50,6 @@ while True:
     n+=1
     k+=1
     r = np.sqrt(pat.population) # radius
-    d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
 
     # apply random mutations
     m = random.expovariate(1)
@@ -58,6 +57,11 @@ while True:
     xy=[(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for k in range(m)]
     for (x,y) in xy:
         pat[x,y] ^= 1
+
+    # early mutations can result in emptiness
+    if pat.bounding_box is None:
+        continue
+    d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
 
     # use lifelib to compute lifespan
     l = lifespan(pat)
