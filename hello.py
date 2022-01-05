@@ -62,6 +62,7 @@ while True:
     if pat.bounding_box is None:
         continue
     d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
+    keep = 1/r
 
     # use lifelib to compute lifespan
     l = lifespan(pat)
@@ -73,7 +74,7 @@ while True:
         lmax=l
         k=1
     elif l==lmax:
-        if random.random()>d: # keep some of the "harmless" mutations
+        if random.random()>keep: # keep some of the "harmless" mutations
             for (x,y) in xy:
                 pat[x,y] ^= 1 # revert
     else:
