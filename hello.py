@@ -6,6 +6,7 @@ import lifelib ; print('lifelib',lifelib.__version__)
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--keep', help='fraction of harmless mutations to retain [0,1]', default=None, type=float)
 parser.add_argument('--results', help='results directory', default='./results')
 parser.add_argument('--seed', help='random seed', default=None, type=int)
 parser.add_argument('--memory', help='garbage collection limit in MB', default=30000, type=int)
@@ -62,7 +63,10 @@ while True:
     if pat.bounding_box is None:
         continue
     d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
-    keep = 1/r
+    if args.keep is None:
+        keep = d
+    else:
+        keep = args.keep
 
     # use lifelib to compute lifespan
     l = lifespan(pat)
