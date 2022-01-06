@@ -19,8 +19,8 @@ if args.seed is None:
 random.seed(args.seed)
 print(args)
 
-def log(hdr,n,k,l,m,pop,d,r):
-    print('{:10} wall {} k {:6d} n {:6d} LIFE {:6d} pop {:6d} m {:6d} r {:12.8f} density {:12.8f}'.format(hdr,datetime.datetime.now(),k,n,l,pop,m,r,d))
+def log(hdr,n,k,l,m,pop,d,r,patience):
+    print('{:10} wall {} k {:6d} n {:6d} LIFE {:6d} pop {:6d} m {:6d} r {:12.8f} density {:12.8f} patience {:12.2f}'.format(hdr,datetime.datetime.now(),k,n,l,pop,m,r,d,patience))
 
 # run soup until population is stable
 def lifespan(pat):
@@ -47,6 +47,7 @@ k=0
 
 pat[0,0] = 1 # seed
 
+patience = args.patience
 while True:
     n+=1
     k+=1
@@ -72,10 +73,12 @@ while True:
     l = lifespan(pat)
 
     if l>lmax:
-        log('BEST',n,k,l,m,pat.population,d,r)
+        log('BEST',n,k,l,m,pat.population,d,r,patience)
         if not args.summary:
             pat.save('{}/best_life{}_seed{}_d{}_n{}.rle'.format(args.results,l,args.seed,d,n))
         lmax=l
+        if k >= (patience/2):
+            patience *= 2
         k=1
     elif l==lmax:
         if random.random()>keep: # keep some of the "harmless" mutations
@@ -86,10 +89,10 @@ while True:
             pat[x,y] ^= 1 # revert
 
     if args.verbose and n%1000==0:
-        log('',n,k,l,m,pat.population,d,r)
+        log('',n,k,l,m,pat.population,d,r,patience)
 
-    if k>args.patience: # reset if stuck
+    if k>patience: # reset if stuck
         l = lifespan(pat) # recompute
-        log('FINAL',n,k,l,m,pat.population,d,r)
+        log('FINAL',n,k,l,m,pat.population,d,r,patience)
         pat.save('{}/final_f{}_seed{}_d{}_n{}.rle'.format(args.results,l,args.seed,d,n))
         exit()
