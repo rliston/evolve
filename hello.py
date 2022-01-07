@@ -6,7 +6,8 @@ import lifelib ; print('lifelib',lifelib.__version__)
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--keep', help='fraction of harmless mutations to retain [0,1]', default=None, type=float)
+parser.add_argument('--prefill',help='sparse prefill radius',default=0,type=int)
+parser.add_argument('--keep', help='fraction of harmless mutations to retain [0,1]', default=1.0, type=float)
 parser.add_argument('--results', help='results directory', default='./results')
 parser.add_argument('--seed', help='random seed', default=None, type=int)
 parser.add_argument('--memory', help='garbage collection limit in MB', default=30000, type=int)
@@ -34,7 +35,7 @@ def lifespan(pat):
             else:
                 last=pat.population
         print('RUNAWAY ...')
-        pat.save('{}/runaway_seed{}_d{}_gen{}_pop{}.rle'.format(args.results,args.seed,pat.population / (pat.bounding_box[2]*pat.bounding_box[3]),itot,pat.population))
+        pat.centre().save('{}/runaway_seed{}_d{}_gen{}_pop{}.rle'.format(args.results,args.seed,pat.population / (pat.bounding_box[2]*pat.bounding_box[3]),itot,pat.population))
         return 0
 
 sess = lifelib.load_rules("b3s23")
@@ -45,7 +46,16 @@ lmax=0
 n=0
 k=0
 
+# prefill WIP
 pat[0,0] = 1 # seed
+r=args.prefill
+#xy = [(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for k in range(32)]
+xy = np.random.normal(0,r,size=(r*r,2))
+xy = np.around(xy)
+xy = xy.astype(int)
+print('xy.shape',xy.shape)
+for (x,y) in xy:
+    pat[x,y] ^= 1
 
 patience = args.patience
 while True:
@@ -64,10 +74,7 @@ while True:
     if pat.bounding_box is None:
         continue
     d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
-    if args.keep is None:
-        keep = d
-    else:
-        keep = args.keep
+    keep = args.keep
 
     # use lifelib to compute lifespan
     l = lifespan(pat)
@@ -75,7 +82,7 @@ while True:
     if l>lmax:
         log('BEST',n,k,l,m,pat.population,d,r,patience,keep)
         if not args.summary:
-            pat.save('{}/best_life{}_seed{}_d{}_n{}.rle'.format(args.results,l,args.seed,d,n))
+            pat.centre().save('{}/best_life{}_seed{}_d{}_n{}.rle'.format(args.results,l,args.seed,d,n))
         lmax=l
         if k >= (patience/2):
             patience *= 2
@@ -94,5 +101,5 @@ while True:
     if k>patience: # reset if stuck
         l = lifespan(pat) # recompute
         log('FINAL',n,k,l,m,pat.population,d,r,patience,keep)
-        pat.save('{}/final_f{}_seed{}_d{}_n{}.rle'.format(args.results,l,args.seed,d,n))
+        pat.centre().save('{}/final_f{}_seed{}_d{}_n{}.rle'.format(args.results,l,args.seed,d,n))
         exit()
