@@ -49,13 +49,11 @@ k=0
 # prefill WIP
 pat[0,0] = 1 # seed
 r=args.prefill
-#xy = [(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for k in range(32)]
 xy = np.random.normal(0,r,size=(r*r,2))
 xy = np.around(xy)
 xy = xy.astype(int)
-print('xy.shape',xy.shape)
-for (x,y) in xy:
-    pat[x,y] ^= 1
+#print('xy.shape',xy.shape)
+pat[xy] ^= 1
 
 patience = args.patience
 while True:
@@ -82,7 +80,7 @@ while True:
     if l>lmax:
         log('BEST',n,k,l,m,pat.population,d,r,patience,keep)
         if not args.summary:
-            pat.centre().save('{}/best_life{}_seed{}_d{}_n{}.rle'.format(args.results,l,args.seed,d,n))
+            pat.centre().save('{}/best_L{:09d}_P{:04d}_K{:6.4f}_seed{}_n{}.rle'.format(args.results,l,args.prefill,args.keep,args.seed,n))
         lmax=l
         if k >= (patience/2):
             patience *= 2
@@ -101,5 +99,5 @@ while True:
     if k>patience: # reset if stuck
         l = lifespan(pat) # recompute
         log('FINAL',n,k,l,m,pat.population,d,r,patience,keep)
-        pat.centre().save('{}/final_f{}_seed{}_d{}_n{}.rle'.format(args.results,l,args.seed,d,n))
+        pat.centre().save('{}/final_L{:09d}_P{:04d}_K{:6.4f}_seed{}_n{}.rle'.format(args.results,l,args.prefill,args.keep,args.seed,n))
         exit()
