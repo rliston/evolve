@@ -49,7 +49,7 @@ k=0
 # prefill WIP
 pat[0,0] = 1 # seed
 r=args.prefill
-xy = np.random.normal(0,r,size=(r*r,2))
+xy = np.random.normal(0,r,size=(int(np.pi*r*r),2))
 xy = np.around(xy)
 xy = xy.astype(int)
 #print('xy.shape',xy.shape)
@@ -59,7 +59,8 @@ patience = args.patience
 while True:
     n+=1
     k+=1
-    r = np.sqrt(pat.population) # radius
+    #r = np.sqrt(pat.population) # radius
+    r = 0.6827*np.sqrt(pat.population) # radius
 
     # apply random mutations
     m = random.expovariate(1)
@@ -72,6 +73,7 @@ while True:
     if pat.bounding_box is None:
         continue
     d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
+    #d = pat.population / (np.pi*(3*r)*(3*r)) # density at 3 sigma
     keep = args.keep
 
     # use lifelib to compute lifespan
