@@ -7,6 +7,7 @@ import lifelib ; print('lifelib',lifelib.__version__)
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--prefill',help='sparse prefill radius',default=0,type=int)
+parser.add_argument('--alpha', help='prefill density', default=1.0, type=float)
 parser.add_argument('--keep', help='fraction of harmless mutations to retain [0,1]', default=1.0, type=float)
 parser.add_argument('--results', help='results directory', default='./results')
 parser.add_argument('--seed', help='random seed', default=None, type=int)
@@ -49,7 +50,7 @@ k=0
 # prefill WIP
 pat[0,0] = 1 # seed
 r=args.prefill
-xy = np.random.normal(0,r,size=(int(np.pi*r*r),2))
+xy = np.random.normal(0,r,size=(int(args.alpha*r*r),2))
 xy = np.around(xy)
 xy = xy.astype(int)
 #print('xy.shape',xy.shape)
@@ -60,7 +61,8 @@ while True:
     n+=1
     k+=1
     #r = np.sqrt(pat.population) # radius
-    r = 0.6827*np.sqrt(pat.population) # radius
+    #r = 0.6827*np.sqrt(pat.population) # radius
+    r = args.prefill
 
     # apply random mutations
     m = random.expovariate(1)
