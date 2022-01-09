@@ -1,4 +1,4 @@
-FROM tensorflow/tensorflow:latest-gpu
+FROM tensorflow/tensorflow:latest
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update -y
 RUN apt-get upgrade -y
@@ -14,5 +14,6 @@ RUN python -c 'import lifelib ; sess = lifelib.load_rules("b3s23")'
 RUN pip install pygments prompt_toolkit
 RUN pip install jupyterlab
 RUN apt-get update && apt-get install -y expect
+RUN pip3 install matplotlib
 
 RUN ldconfig
