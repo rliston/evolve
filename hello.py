@@ -6,19 +6,20 @@ import lifelib ; print('lifelib',lifelib.__version__)
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--prefill',help='sparse prefill radius',default=0,type=int)
+parser.add_argument('--prefill',help='sparse prefill radius',default=20,type=int)
 parser.add_argument('--alpha', help='prefill density', default=1.0, type=float)
-parser.add_argument('--keep', help='fraction of harmless mutations to retain [0,1]', default=1.0, type=float)
+parser.add_argument('--keep', help='fraction of harmless mutations to retain [0,1]', default=0.5, type=float)
 parser.add_argument('--results', help='results directory', default='./results')
 parser.add_argument('--seed', help='random seed', default=None, type=int)
 parser.add_argument('--memory', help='garbage collection limit in MB', default=30000, type=int)
-parser.add_argument('--patience', help='generations to wait before reset', default=10000, type=int)
+parser.add_argument('--patience', help='generations to wait before reset', default=1000, type=int)
 parser.add_argument('--summary',help='only save final pattern',default=False, action='store_true')
 parser.add_argument('--verbose', default=False, action='store_true')
 args = parser.parse_args()
 if args.seed is None:
     args.seed = random.randint(1,1000000)
 random.seed(args.seed)
+np.random.seed(args.seed)
 print(args)
 
 def log(hdr,n,k,l,m,pop,d,r,patience,keep):
@@ -60,9 +61,10 @@ patience = args.patience
 while True:
     n+=1
     k+=1
-    #r = np.sqrt(pat.population) # radius
+    r = np.sqrt(pat.population) # radius
     #r = 0.6827*np.sqrt(pat.population) # radius
-    r = args.prefill
+    #r = args.prefill
+    #r = 0.5*np.sqrt(pat.population) # radius
 
     # apply random mutations
     m = random.expovariate(1)
