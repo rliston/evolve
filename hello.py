@@ -6,13 +6,12 @@ import lifelib ; print('lifelib',lifelib.__version__)
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--prefill',help='sparse prefill radius',default=20,type=int)
-parser.add_argument('--alpha', help='prefill density', default=1.0, type=float)
-parser.add_argument('--keep', help='fraction of harmless mutations to retain [0,1]', default=0.5, type=float)
+parser.add_argument('--keep', help='fraction of harmless mutations to retain [0,1]', default=0.2, type=float)
 parser.add_argument('--results', help='results directory', default='./results')
 parser.add_argument('--seed', help='random seed', default=None, type=int)
 parser.add_argument('--memory', help='garbage collection limit in MB', default=30000, type=int)
 parser.add_argument('--patience', help='generations to wait before reset', default=1000, type=int)
+parser.add_argument('--restraint', help='rate of patience expansion', default=1.5, type=float)
 parser.add_argument('--summary',help='only save final pattern',default=False, action='store_true')
 parser.add_argument('--verbose', default=False, action='store_true')
 args = parser.parse_args()
@@ -37,7 +36,7 @@ def lifespan(pat):
             else:
                 last=pat.population
         print('RUNAWAY ...')
-        pat.centre().save('{}/runaway_seed{}_d{}_gen{}_pop{}.rle'.format(args.results,args.seed,pat.population / (pat.bounding_box[2]*pat.bounding_box[3]),itot,pat.population))
+        pat.centre().write_rle('{}/runaway_seed{}_d{}_gen{}_pop{}.rle'.format(args.results,args.seed,pat.population / (pat.bounding_box[2]*pat.bounding_box[3]),itot,pat.population))
         return 0
 
 sess = lifelib.load_rules("b3s23")
@@ -48,22 +47,12 @@ lmax=0
 n=0
 k=0
 
-# prefill WIP
-pat[0,0] = 1 # seed
-r=args.prefill
-xy = np.random.normal(0,r,size=(int(args.alpha*r*r),2))
-xy = np.around(xy)
-xy = xy.astype(int)
-#print('xy.shape',xy.shape)
-pat[xy] ^= 1
-
 patience = args.patience
 while True:
     n+=1
     k+=1
     r = np.sqrt(pat.population) # radius
     #r = 0.6827*np.sqrt(pat.population) # radius
-    #r = args.prefill
     #r = 0.5*np.sqrt(pat.population) # radius
 
     # apply random mutations
@@ -86,10 +75,11 @@ while True:
     if l>lmax:
         log('BEST',n,k,l,m,pat.population,d,r,patience,keep)
         if not args.summary:
-            pat.centre().save('{}/best_L{:09d}_P{:04d}_K{:6.4f}_seed{}_n{}.rle'.format(args.results,l,args.prefill,args.keep,args.seed,n))
+            pat.centre().write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         lmax=l
         if k >= (patience/2):
-            patience *= 2
+            #patience *= 2
+            patience *= args.restraint
         k=1
     elif l==lmax:
         if random.random()>keep: # keep some of the "harmless" mutations
@@ -105,5 +95,5 @@ while True:
     if k>patience: # reset if stuck
         l = lifespan(pat) # recompute
         log('FINAL',n,k,l,m,pat.population,d,r,patience,keep)
-        pat.centre().save('{}/final_L{:09d}_P{:04d}_K{:6.4f}_seed{}_n{}.rle'.format(args.results,l,args.prefill,args.keep,args.seed,n))
+        pat.centre().save('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         exit()
