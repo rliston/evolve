@@ -19,7 +19,7 @@ np.random.seed(args.seed)
 print(args)
 
 def log(hdr,n,k,l,m,pop,d,r,patience,keep,advance):
-    print('{:10} wall {} k {:6d} n {:6d} LIFE {:6d} pop {:6d} m {:6d} r {:12.8f} density {:12.8f} patience {:12.0f} keep {:12.8f} advance {:6d}'.format(hdr,datetime.datetime.now(),k,n,l,pop,m,r,d,patience,keep,advance))
+    print('{:10} wall {} k {:6d} n {:6d} LIFE \033[1m{:6d}\033[0m pop {:6d} m {:6d} r {:12.8f} density {:12.8f} patience {:12.0f} keep {:12.8f} advance {:6d}'.format(hdr,datetime.datetime.now(),k,n,l,pop,m,r,d,patience,keep,advance))
 
 # run soup until population is stable
 def lifespan(pat,advance):
@@ -32,9 +32,7 @@ def lifespan(pat,advance):
                 return itot
             else:
                 last=pat.population
-        print('RUNAWAY ...')
-        pat.centre().write_rle('{}/runaway_seed{}_d{}_gen{}_pop{}.rle'.format(args.results,args.seed,pat.population / (pat.bounding_box[2]*pat.bounding_box[3]),itot,pat.population))
-        return 0
+        return -1
 
 sess = lifelib.load_rules("b3s23")
 lt = sess.lifetree(memory=args.memory) # 50GB RAM
@@ -54,7 +52,8 @@ while True:
     # apply random mutations
     d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
     r = np.sqrt(pat.population) # radius
-    keep = 1/r
+    p=1/r
+    keep = -p*np.log(p)
     m = random.expovariate(1)
     m = int(np.ceil(m))
     xy=[(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for k in range(m)]
@@ -68,7 +67,11 @@ while True:
     # use lifelib to compute lifespan
     l = lifespan(pat,advance)
 
-    if l>lmax:
+    if l<0: # RUNAWAY
+        log('RUNAWAY',n,k,l,m,pat.population,d,r,patience,keep,advance)
+        pat.centre().save('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+        exit()
+    elif l>lmax:
         log('BEST',n,k,l,m,pat.population,d,r,patience,keep,advance)
         if not args.summary:
             pat.centre().write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
