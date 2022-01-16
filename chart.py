@@ -21,19 +21,29 @@ def parselog(fn,field):
         if l[0:4] == 'BEST':
             r = l[15:].split()
             #print(r)
-            a.append(float(r[field]))
+            #print(r[field],r)
+            alphanumeric=''
+            for character in r[field]:
+                if character.isdecimal():
+                    alphanumeric += character
+            #print(alphanumeric,len(alphanumeric))
+            if len(alphanumeric)==0:
+                break
+            a.append(float(alphanumeric))
     return np.array(a)
 
 n = parselog(args.log,5)
-life = parselog(args.log,7)
-pop = parselog(args.log,9)
+life = parselog(args.log,8)
+pop = parselog(args.log,10)
 
 print(n.shape,n[0:10])
 print(life.shape,life[0:10])
 print(pop.shape,pop[0:10])
 
-plt.plot(n,life)
-plt.plot(n,pop)
+plt.xlabel('generation')
+plt.plot(n,life,label='lifetime')
+plt.plot(n,pop,label='initial population')
+plt.legend(loc='best')
 plt.show()
 exit()
 
