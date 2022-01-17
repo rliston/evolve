@@ -38,6 +38,7 @@ sess = lifelib.load_rules("b3s23")
 lt = sess.lifetree(memory=args.memory) # 50GB RAM
 pat = lt.pattern() # empty pattern
 
+nrun=0
 lmax=1
 n=0
 k=0
@@ -72,6 +73,9 @@ while True:
         pat.centre().save('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         for (x,y) in xy:
             pat[x,y] ^= 1 # revert
+        nrun+=1
+        if nrun>100:
+            break
     elif l>lmax:
         log('BEST',n,k,l,m,pat.population,d,r,patience,keep,advance)
         if not args.summary:
