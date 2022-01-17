@@ -33,8 +33,8 @@ def parselog(fn,field):
     return np.array(a)
 
 n = parselog(args.log,5)
-life = parselog(args.log,8)
-pop = parselog(args.log,10)
+life = parselog(args.log,7)
+pop = parselog(args.log,9)
 
 print(n.shape,n[0:10])
 print(life.shape,life[0:10])

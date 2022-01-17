@@ -19,7 +19,7 @@ np.random.seed(args.seed)
 print(args)
 
 def log(hdr,n,k,l,m,pop,d,r,patience,keep,advance):
-    print('{:10} wall {} k {:6d} n {:6d} LIFE \033[1m{:6d}\033[0m pop {:6d} m {:6d} r {:12.8f} density {:12.8f} patience {:12.0f} keep {:12.8f} advance {:6d}'.format(hdr,datetime.datetime.now(),k,n,l,pop,m,r,d,patience,keep,advance))
+    print('{:10} wall {} k {:6d} n {:6d} \033[1mLIFE\033[0m {:6d} pop {:6d} m {:6d} r {:12.8f} density {:12.8f} patience {:12.0f} keep {:12.8f} advance {:6d}'.format(hdr,datetime.datetime.now(),k,n,l,pop,m,r,d,patience,keep,advance))
 
 # run soup until population is stable
 def lifespan(pat,advance):
