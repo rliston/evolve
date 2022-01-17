@@ -70,7 +70,8 @@ while True:
     if l<0: # RUNAWAY
         log('RUNAWAY',n,k,l,m,pat.population,d,r,patience,keep,advance)
         pat.centre().save('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
-        exit()
+        for (x,y) in xy:
+            pat[x,y] ^= 1 # revert
     elif l>lmax:
         log('BEST',n,k,l,m,pat.population,d,r,patience,keep,advance)
         if not args.summary:
@@ -91,5 +92,6 @@ while True:
     if k>patience: # reset if stuck
         l = lifespan(pat,advance) # recompute
         log('FINAL',n,k,l,m,pat.population,d,r,patience,keep,advance)
-        pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
-        exit()
+        if l>1:
+            pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+        break
