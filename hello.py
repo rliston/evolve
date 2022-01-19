@@ -26,8 +26,8 @@ def lifespan(pat,advance):
         last=0
         itot=0
         for i in range(1000000//advance):
-            pat = pat.advance(advance+(i%7))
-            itot += advance+(i%7)
+            pat = pat.advance(advance+(i%17))
+            itot += advance+(i%17)
             if pat.population == last:
                 return itot
             else:
@@ -48,13 +48,22 @@ while True:
     n+=1
     k+=1
     patience = lmax
-    advance = 2**int(np.log(lmax))
+    #advance = 2**int(np.log(lmax))
+    advance = 100
 
     # apply random mutations
-    d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
-    r = np.sqrt(pat.population) # radius
-    p=1/r
-    keep = -p*np.log(p)
+    #r = np.sqrt(pat.population) # radius
+    r = int(np.sqrt(pat.population)) # radius
+    #d1 = pat[-r:r,-r:r].population / (2*r*2*r)
+    #d2 = pat[-2*r:2*r,-2*r:2*r].population / (2*2*r*2*2*r)
+    d3 = pat[-3*r:3*r,-3*r:3*r].population / (2*3*r*2*3*r) # 3-sigma radius
+    #d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
+    #p=1/r
+    #keep = -p*np.log(p)
+    #keep = max(0,1-(1/pat.population))
+    #keep = max(0,1-(pat.population/20000))
+    #keep = max(0,1-(pat.population/20000))
+    keep = 1/np.log(r)
     m = random.expovariate(1)
     m = int(np.ceil(m))
     xy=[(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for k in range(m)]
@@ -69,7 +78,7 @@ while True:
     l = lifespan(pat,advance)
 
     if l<0: # RUNAWAY
-        log('RUNAWAY',n,k,l,m,pat.population,d,r,patience,keep,advance)
+        log('RUNAWAY',n,k,l,m,pat.population,d3,r,patience,keep,advance)
         pat.centre().save('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         for (x,y) in xy:
             pat[x,y] ^= 1 # revert
@@ -77,7 +86,7 @@ while True:
         if nrun>100:
             break
     elif l>lmax:
-        log('BEST',n,k,l,m,pat.population,d,r,patience,keep,advance)
+        log('BEST',n,k,l,m,pat.population,d3,r,patience,keep,advance)
         if not args.summary:
             pat.centre().write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         lmax=l
@@ -91,11 +100,11 @@ while True:
             pat[x,y] ^= 1 # revert
 
     if args.verbose and n%1000==0:
-        log('',n,k,l,m,pat.population,d,r,patience,keep,advance)
+        log('',n,k,l,m,pat.population,d3,r,patience,keep,advance)
 
     if k>patience: # reset if stuck
         l = lifespan(pat,advance) # recompute
-        log('FINAL',n,k,l,m,pat.population,d,r,patience,keep,advance)
+        log('FINAL',n,k,l,m,pat.population,d3,r,patience,keep,advance)
         if l>1:
             pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         break
