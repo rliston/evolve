@@ -40,22 +40,23 @@ lt = sess.lifetree(memory=args.memory) # 50GB RAM
 pat = lt.pattern() # empty pattern
 
 nrun=0
-lmax=1
+lmax=0
+dmax=0
 n=0
 k=0
-pat[0,0] = 1 # seed
+#pat[0,0] = 1 # seed
 
 while True:
     n+=1
     k+=1
     #patience = lmax
-    patience = 100000
+    patience = 0
     #advance = 2**int(np.log(lmax))
-    advance = 500
+    advance = 1000
 
     # apply random mutations
     #r = np.sqrt(pat.population) # radius
-    r = np.sqrt(pat.population) # radius
+    r = 1+np.sqrt(pat.population) # radius
     #d1 = pat[-r:r,-r:r].population / (2*r*2*r)
     #d2 = pat[-2*r:2*r,-2*r:2*r].population / (2*2*r*2*2*r)
     #d = pat[-3*r:3*r,-3*r:3*r].population / (2*3*r*2*3*r) # 3-sigma radius, each side is sigma*(r+r)
@@ -68,7 +69,7 @@ while True:
     #keep = max(0,1-(pat.population/20000))
     #keep = max(0,1-(pat.population/20000))
     #keep = 1/np.log(r)
-    keep = 0.5
+    keep = 1
     m = random.expovariate(1)
     m = int(np.ceil(m))
     xy=[(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for k in range(m)]
@@ -96,6 +97,13 @@ while True:
             pat.centre().write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         lmax=l
         k=1
+        if d<dmax:
+            l = lifespan(pat,advance) # recompute
+            log('FINAL',n,k,l,m,pat.population,d,r,patience,keep,advance)
+            pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+            break
+        else:
+            dmax = d
     elif l==lmax:
         if random.random()>keep: # keep some of the "harmless" mutations
             for (x,y) in xy:
@@ -107,9 +115,9 @@ while True:
     if args.verbose and n%1000==0:
         log('',n,k,l,m,pat.population,d,r,patience,keep,advance)
 
-    if k>patience: # reset if stuck
-        l = lifespan(pat,advance) # recompute
-        log('FINAL',n,k,l,m,pat.population,d,r,patience,keep,advance)
-        if l>1:
-            pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
-        break
+#    if k>patience: # reset if stuck
+#        l = lifespan(pat,advance) # recompute
+#        log('FINAL',n,k,l,m,pat.population,d,r,patience,keep,advance)
+#        if l>1:
+#            pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+#        break
