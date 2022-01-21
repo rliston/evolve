@@ -45,6 +45,7 @@ dmax=0
 n=0
 k=0
 #pat[0,0] = 1 # seed
+da=[]
 
 while True:
     n+=1
@@ -62,6 +63,8 @@ while True:
     #d = pat[-3*r:3*r,-3*r:3*r].population / (2*3*r*2*3*r) # 3-sigma radius, each side is sigma*(r+r)
     rs = int(args.sigma*r)
     d = pat[-rs:rs,-rs:rs].population / ((2*rs)**2) # 3-sigma radius, each side is sigma*(r+r)
+    da.append(d)
+    d = np.mean(da)
     #d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
     #p=1/r
     #keep = -p*np.log(p)
@@ -92,18 +95,17 @@ while True:
         if nrun>100:
             break
     elif l>lmax:
-        log('BEST',n,k,l,m,pat.population,d,r,patience,keep,advance)
-        if not args.summary:
-            pat.centre().write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
-        lmax=l
-        k=1
         if d<dmax:
             l = lifespan(pat,advance) # recompute
             log('FINAL',n,k,l,m,pat.population,d,r,patience,keep,advance)
             pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
             break
-        else:
-            dmax = d
+        log('BEST',n,k,l,m,pat.population,d,r,patience,keep,advance)
+        if not args.summary:
+            pat.centre().write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+        lmax=l
+        dmax = d
+        k=1
     elif l==lmax:
         if random.random()>keep: # keep some of the "harmless" mutations
             for (x,y) in xy:
