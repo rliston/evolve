@@ -6,6 +6,7 @@ import lifelib ; print('lifelib',lifelib.__version__)
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--sigma', help='sample area for density calculation', default=3, type=float)
 parser.add_argument('--results', help='results directory', default='./results')
 parser.add_argument('--seed', help='random seed', default=None, type=int)
 parser.add_argument('--memory', help='garbage collection limit in MB', default=30000, type=int)
@@ -47,23 +48,27 @@ pat[0,0] = 1 # seed
 while True:
     n+=1
     k+=1
-    patience = lmax
+    #patience = lmax
+    patience = 100000
     #advance = 2**int(np.log(lmax))
-    advance = 100
+    advance = 500
 
     # apply random mutations
     #r = np.sqrt(pat.population) # radius
-    r = int(np.sqrt(pat.population)) # radius
+    r = np.sqrt(pat.population) # radius
     #d1 = pat[-r:r,-r:r].population / (2*r*2*r)
     #d2 = pat[-2*r:2*r,-2*r:2*r].population / (2*2*r*2*2*r)
-    d3 = pat[-3*r:3*r,-3*r:3*r].population / (2*3*r*2*3*r) # 3-sigma radius
+    #d = pat[-3*r:3*r,-3*r:3*r].population / (2*3*r*2*3*r) # 3-sigma radius, each side is sigma*(r+r)
+    rs = int(args.sigma*r)
+    d = pat[-rs:rs,-rs:rs].population / ((2*rs)**2) # 3-sigma radius, each side is sigma*(r+r)
     #d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
     #p=1/r
     #keep = -p*np.log(p)
     #keep = max(0,1-(1/pat.population))
     #keep = max(0,1-(pat.population/20000))
     #keep = max(0,1-(pat.population/20000))
-    keep = 1/np.log(r)
+    #keep = 1/np.log(r)
+    keep = 0.5
     m = random.expovariate(1)
     m = int(np.ceil(m))
     xy=[(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for k in range(m)]
@@ -78,7 +83,7 @@ while True:
     l = lifespan(pat,advance)
 
     if l<0: # RUNAWAY
-        log('RUNAWAY',n,k,l,m,pat.population,d3,r,patience,keep,advance)
+        log('RUNAWAY',n,k,l,m,pat.population,d,r,patience,keep,advance)
         pat.centre().save('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         for (x,y) in xy:
             pat[x,y] ^= 1 # revert
@@ -86,7 +91,7 @@ while True:
         if nrun>100:
             break
     elif l>lmax:
-        log('BEST',n,k,l,m,pat.population,d3,r,patience,keep,advance)
+        log('BEST',n,k,l,m,pat.population,d,r,patience,keep,advance)
         if not args.summary:
             pat.centre().write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         lmax=l
@@ -100,11 +105,11 @@ while True:
             pat[x,y] ^= 1 # revert
 
     if args.verbose and n%1000==0:
-        log('',n,k,l,m,pat.population,d3,r,patience,keep,advance)
+        log('',n,k,l,m,pat.population,d,r,patience,keep,advance)
 
     if k>patience: # reset if stuck
         l = lifespan(pat,advance) # recompute
-        log('FINAL',n,k,l,m,pat.population,d3,r,patience,keep,advance)
+        log('FINAL',n,k,l,m,pat.population,d,r,patience,keep,advance)
         if l>1:
             pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         break
