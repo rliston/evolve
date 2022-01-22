@@ -39,52 +39,37 @@ sess = lifelib.load_rules("b3s23")
 lt = sess.lifetree(memory=args.memory) # 50GB RAM
 pat = lt.pattern() # empty pattern
 
-nrun=0
+nrun=0 # runaway count
 lmax=0
-dmax=0
 n=0
 k=0
-#pat[0,0] = 1 # seed
-da=[]
 
 while True:
     n+=1
     k+=1
-    #patience = lmax
-    patience = 0
-    #advance = 2**int(np.log(lmax))
-    advance = 1000
+    patience = 100+lmax
+    keep = k/patience
+    advance = 2**int(np.log(1+lmax))
 
     # apply random mutations
-    #r = np.sqrt(pat.population) # radius
-    r = 1+np.sqrt(pat.population) # radius
-    #d1 = pat[-r:r,-r:r].population / (2*r*2*r)
-    #d2 = pat[-2*r:2*r,-2*r:2*r].population / (2*2*r*2*2*r)
-    #d = pat[-3*r:3*r,-3*r:3*r].population / (2*3*r*2*3*r) # 3-sigma radius, each side is sigma*(r+r)
-    rs = int(args.sigma*r)
-    d = pat[-rs:rs,-rs:rs].population / ((2*rs)**2) # 3-sigma radius, each side is sigma*(r+r)
-    da.append(d)
-    d = np.mean(da)
-    #d = pat.population / (pat.bounding_box[2]*pat.bounding_box[3]) # density
-    #p=1/r
-    #keep = -p*np.log(p)
-    #keep = max(0,1-(1/pat.population))
-    #keep = max(0,1-(pat.population/20000))
-    #keep = max(0,1-(pat.population/20000))
-    #keep = 1/np.log(r)
-    keep = 1
     m = random.expovariate(1)
     m = int(np.ceil(m))
-    xy=[(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for k in range(m)]
+    r = 1+np.sqrt(pat.population) # radius
+    xy=[(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for i in range(m)]
     for (x,y) in xy:
         pat[x,y] ^= 1
-    # early mutations can result in emptiness
-    if pat.bounding_box is None:
-        pat[0,0] = 1 # seed
-        continue
 
     # use lifelib to compute lifespan
     l = lifespan(pat,advance)
+
+    # compute density metric
+    rs = int(args.sigma*r)
+    d = pat[-rs:rs,-rs:rs].population / ((2*rs)**2) # 3-sigma radius, each side is sigma*(r+r)
+
+    if k>patience: # reset if stuck
+        log('FINAL',n,k,l,m,pat.population,d,r,patience,keep,advance)
+        pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+        break
 
     if l<0: # RUNAWAY
         log('RUNAWAY',n,k,l,m,pat.population,d,r,patience,keep,advance)
@@ -94,32 +79,21 @@ while True:
         nrun+=1
         if nrun>100:
             break
-    elif l>lmax:
-        if d<dmax:
-            l = lifespan(pat,advance) # recompute
-            log('FINAL',n,k,l,m,pat.population,d,r,patience,keep,advance)
-            pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
-            break
+
+    if l>lmax:
         log('BEST',n,k,l,m,pat.population,d,r,patience,keep,advance)
         if not args.summary:
             pat.centre().write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         lmax=l
-        dmax = d
         k=1
-    elif l==lmax:
+
+    if l==lmax:
         if random.random()>keep: # keep some of the "harmless" mutations
             for (x,y) in xy:
                 pat[x,y] ^= 1 # revert
-    else:
+    if l<lmax:
         for (x,y) in xy:
             pat[x,y] ^= 1 # revert
 
     if args.verbose and n%1000==0:
         log('',n,k,l,m,pat.population,d,r,patience,keep,advance)
-
-#    if k>patience: # reset if stuck
-#        l = lifespan(pat,advance) # recompute
-#        log('FINAL',n,k,l,m,pat.population,d,r,patience,keep,advance)
-#        if l>1:
-#            pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
-#        break
