@@ -66,11 +66,6 @@ while True:
     rs = int(args.sigma*r)
     d = pat[-rs:rs,-rs:rs].population / ((2*rs)**2) # 3-sigma radius, each side is sigma*(r+r)
 
-    if k>patience: # reset if stuck
-        log('FINAL',n,k,l,m,pat.population,d,r,patience,keep,advance)
-        pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
-        break
-
     if l<0: # RUNAWAY
         log('RUNAWAY',n,k,l,m,pat.population,d,r,patience,keep,advance)
         pat.centre().save('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
@@ -97,3 +92,9 @@ while True:
 
     if args.verbose and n%1000==0:
         log('',n,k,l,m,pat.population,d,r,patience,keep,advance)
+
+    if k>patience: # reset if stuck
+        log('FINAL',n,k,lmax,m,pat.population,d,r,patience,keep,advance)
+        pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,lmax,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+        break
+
