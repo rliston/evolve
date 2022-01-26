@@ -1,11 +1,15 @@
 import argparse
 import random
 import datetime
+import time
 import numpy as np ; print('numpy ' + np.__version__)
 import lifelib ; print('lifelib',lifelib.__version__)
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--timeout', help='stopping limit', default=99999999, type=int)
+parser.add_argument('--patience', help='stopping limit', default=10000, type=int)
+parser.add_argument('--radius', help='initial radius', default=1.0, type=float)
 parser.add_argument('--sigma', help='sample area for density calculation', default=3, type=float)
 parser.add_argument('--results', help='results directory', default='./results')
 parser.add_argument('--seed', help='random seed', default=None, type=int)
@@ -19,8 +23,8 @@ random.seed(args.seed)
 np.random.seed(args.seed)
 print(args)
 
-def log(hdr,n,k,l,m,pop,d,r,patience,keep,advance):
-    print('{:10} wall {} k {:6d} n {:6d} \033[1mLIFE\033[0m {:6d} pop {:6d} m {:6d} r {:12.8f} density {:12.8f} patience {:12.0f} keep {:12.8f} advance {:6d}'.format(hdr,datetime.datetime.now(),k,n,l,pop,m,r,d,patience,keep,advance))
+def log(hdr,n,k,l,m,pop,d,r,patience,keep,advance,mut,push):
+    print('{:10} wall {} n {:6d} k {:6d} \033[1mLIFE\033[0m {:6d} pop {:6d} m {:6d} r {:12.8f} density {:12.8f} patience {:12.0f} keep {:12.8f} mut {:6d} push {:6d} advance {:6d}'.format(hdr,datetime.datetime.now(),n,k,l,pop,m,r,d,patience,keep,mut,push,advance))
 
 # run soup until population is stable
 def lifespan(pat,advance):
@@ -40,21 +44,39 @@ lt = sess.lifetree(memory=args.memory) # 50GB RAM
 pat = lt.pattern() # empty pattern
 
 nrun=0 # runaway count
-lmax=0
 n=0
 k=0
+lmax=0
+mut=0
+push=0
+hist=[]
+t0=time.time()
 
 while True:
+    backtrack = False
     n+=1
     k+=1
-    patience = 100+lmax
+    #patience = 100+lmax
+    patience = args.patience
     keep = k/patience
-    advance = 2**int(np.log(1+lmax))
+    #keep=0
+    #keep = 0.1
+    #advance = 2**int(np.log(1+lmax))
+#    if lmax < 1000:
+#        advance = 10
+#    elif lmax < 10000:
+#        advance = 100
+#    else:
+#        advance = 1000
+
+    advance = 1000
 
     # apply random mutations
     m = random.expovariate(1)
     m = int(np.ceil(m))
-    r = 1+np.sqrt(pat.population) # radius
+    #r = 1.414+np.sqrt(pat.population) # radius
+    #r = args.radius+np.sqrt(pat.population) # radius
+    r = max(args.radius,np.sqrt(pat.population)) # radius
     xy=[(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for i in range(m)]
     for (x,y) in xy:
         pat[x,y] ^= 1
@@ -67,34 +89,64 @@ while True:
     d = pat[-rs:rs,-rs:rs].population / ((2*rs)**2) # 3-sigma radius, each side is sigma*(r+r)
 
     if l<0: # RUNAWAY
-        log('RUNAWAY',n,k,l,m,pat.population,d,r,patience,keep,advance)
-        pat.centre().save('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+        log('RUNAWAY',n,k,l,m,pat.population,d,r,patience,keep,advance,mut,push)
+        pat.save('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         for (x,y) in xy:
             pat[x,y] ^= 1 # revert
         nrun+=1
         if nrun>100:
-            break
+            backtrack=True
 
-    if l>lmax:
-        log('BEST',n,k,l,m,pat.population,d,r,patience,keep,advance)
+    elif l>lmax: # keep the mutation
+        mut+=m
+        log('BEST',n,k,l,m,pat.population,d,r,patience,keep,advance,mut,push)
         if not args.summary:
-            pat.centre().write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
-        lmax=l
+            pat.write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+        lmax = l
+        hist.append(pat.coords())
         k=1
+        t0 = time.time()
 
-    if l==lmax:
+    elif l==lmax:
         if random.random()>keep: # keep some of the "harmless" mutations
             for (x,y) in xy:
                 pat[x,y] ^= 1 # revert
-    if l<lmax:
+        else:
+            push+=m
+
+    elif l<lmax:
         for (x,y) in xy:
             pat[x,y] ^= 1 # revert
 
     if args.verbose and n%1000==0:
-        log('',n,k,l,m,pat.population,d,r,patience,keep,advance)
+        log('',n,k,l,m,pat.population,d,r,patience,keep,advance,mut,push)
 
     if k>patience: # reset if stuck
-        log('FINAL',n,k,lmax,m,pat.population,d,r,patience,keep,advance)
-        pat.centre().save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,lmax,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
-        break
+        #log('FINAL',n,k,lmax,m,pat.population,d,r,patience,keep,advance,mut,push)
+        #pat.save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,lmax,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+        backtrack=True
 
+    if time.time()-t0 > args.timeout: # time based stopping for experimentation
+        log('TIMEOUT',n,k,lmax,m,pat.population,d,r,patience,keep,advance,mut,push)
+        pat.save('{}/timeout_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,lmax,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+        backtrack=True
+
+    if backtrack:
+        #b = random.expovariate(1)
+        #b = int(np.ceil(m))
+#        b=1
+#        if len(hist) < b+1:
+#            break
+#        del hist[-b:]
+        pat = lt.pattern()
+        for (x,y) in hist.pop():
+            pat[x,y]=1
+
+        lmax = lifespan(pat,advance)
+        t0 = time.time()
+        k=1
+        backtrack=False
+        r = max(args.radius,np.sqrt(pat.population)) # radius
+        rs = int(args.sigma*r)
+        d = pat[-rs:rs,-rs:rs].population / ((2*rs)**2) # 3-sigma radius, each side is sigma*(r+r)
+        log('BACKTRACK',n,k,lmax,m,pat.population,d,r,patience,keep,advance,mut,push)
