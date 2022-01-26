@@ -32,7 +32,7 @@ def parselog(fn,field):
             a.append(float(alphanumeric))
     return np.array(a)
 
-n = parselog(args.log,5)
+n = parselog(args.log,3)
 life = parselog(args.log,7)
 pop = parselog(args.log,9)
 
