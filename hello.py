@@ -4,11 +4,13 @@ import datetime
 import time
 import numpy as np ; print('numpy ' + np.__version__)
 import lifelib ; print('lifelib',lifelib.__version__)
+from scipy.stats import entropy
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--timeout', help='stopping limit', default=99999999, type=int)
 parser.add_argument('--patience', help='stopping limit', default=10000, type=int)
+parser.add_argument('--advance', help='step size', default=100, type=int)
 parser.add_argument('--radius', help='initial radius', default=1.0, type=float)
 parser.add_argument('--sigma', help='sample area for density calculation', default=3, type=float)
 parser.add_argument('--results', help='results directory', default='./results')
@@ -27,17 +29,72 @@ def log(hdr,n,k,l,m,pop,d,r,patience,keep,advance,mut,push):
     print('{:10} wall {} n {:6d} k {:6d} \033[1mLIFE\033[0m {:6d} pop {:6d} m {:6d} r {:12.8f} density {:12.8f} patience {:12.0f} keep {:12.8f} mut {:6d} push {:6d} advance {:6d}'.format(hdr,datetime.datetime.now(),n,k,l,pop,m,r,d,patience,keep,mut,push,advance))
 
 # run soup until population is stable
-def lifespan(pat,advance):
-        last=0
-        itot=0
-        for i in range(1000000//advance):
-            pat = pat.advance(advance+(i%17))
-            itot += advance+(i%17)
-            if pat.population == last:
-                return itot
-            else:
-                last=pat.population
-        return -1
+def lifespan(pat,lmax):
+        period=17
+        pat = pat.advance(lmax) # jump to lmax
+        pt = [pat.advance(k).population for k in range(1,period)] # population trace up to period
+        value,counts = np.unique(pt, return_counts=True)
+        e = entropy(counts)
+        if e>2:
+            #print(e,pt)
+            return lmax+period
+        else:
+            return lmax
+        #e = int(period*e)
+        #print(e,pt)
+        #return lmax
+#        print(e,int(period*e),pt)
+#        return lmax
+#        if e>.1:
+#            print(e,int(period*e),pt)
+#            return int(lmax+period*e)
+#        else:
+#            return lmax
+#
+#        sl = len(set(pt))
+#        if sl>2:
+#            print(lmax,sl,sum(pt),pt)
+#            return lmax+sl
+#        else:
+#            print('FAIL',lmax,sl,sum(pt),pt)
+#            return lmax
+
+#        last=0
+#        itot=lmax
+#        for i in range(10000):
+#            pat = pat.advance(i%17)
+#            itot+=i%17
+#            if pat.population == last:
+#                return itot
+#            else:
+#                last=pat.population
+#        return -1
+
+## run soup until population is stable
+#def lifespan(pat,advance):
+#    period=20
+#    #pat = pat.advance(period)
+#    s=0
+#    for i in range(1000000//advance):
+#        ph=[]
+#        #for k in range(20):
+#        #    pat = pat.advance(1)
+#        #    ph.append(pat.population)
+#        ph = [pat.advance(k).population for k in range(period)] # population trace up to period
+#        s0=sum(ph)
+#        print(s,s0,ph)
+#        if s0==s:
+#            return(i*advance)
+#        else:
+#            s=s0
+#            
+#        #ll = len(ph)
+#        #sl = len(set(ph))
+#        #if ll>sl and sl>1:
+#        #    #print(ll,sl,ph)
+#        #    return sl+i*advance-1
+#        pat = pat.advance(advance)
+#    return -1
 
 sess = lifelib.load_rules("b3s23")
 lt = sess.lifetree(memory=args.memory) # 50GB RAM
@@ -50,6 +107,7 @@ lmax=0
 mut=0
 push=0
 hist=[]
+adv=[]
 t0=time.time()
 
 while True:
@@ -58,31 +116,37 @@ while True:
     k+=1
     #patience = 100+lmax
     patience = args.patience
-    keep = k/patience
-    #keep=0
+    #keep = k/patience
+    keep=0
     #keep = 0.1
     #advance = 2**int(np.log(1+lmax))
-#    if lmax < 1000:
-#        advance = 10
-#    elif lmax < 10000:
-#        advance = 100
-#    else:
-#        advance = 1000
+    if lmax < 100:
+        advance = 1
+    elif lmax < 1000:
+        advance = 10
+    elif lmax < 10000:
+        advance = 100
+    else:
+        advance = 100
 
-    advance = 1000
+    #advance = args.advance
+
+    #r = 1.414+np.sqrt(pat.population) # radius
+    #r = args.radius+np.sqrt(pat.population) # radius
+    r = max(args.radius,np.sqrt(pat.population)) # radius
 
     # apply random mutations
     m = random.expovariate(1)
     m = int(np.ceil(m))
-    #r = 1.414+np.sqrt(pat.population) # radius
-    #r = args.radius+np.sqrt(pat.population) # radius
-    r = max(args.radius,np.sqrt(pat.population)) # radius
+    # m = int(m*r)
+    #m = random.randint(1,int(1+r))
+
     xy=[(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for i in range(m)]
     for (x,y) in xy:
         pat[x,y] ^= 1
 
     # use lifelib to compute lifespan
-    l = lifespan(pat,advance)
+    l = lifespan(pat,lmax)
 
     # compute density metric
     rs = int(args.sigma*r)
@@ -104,6 +168,7 @@ while True:
             pat.write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         lmax = l
         hist.append(pat.coords())
+        adv.append(lmax)
         k=1
         t0 = time.time()
 
@@ -132,6 +197,8 @@ while True:
         backtrack=True
 
     if backtrack:
+        if len(hist)==0:
+            break
         #b = random.expovariate(1)
         #b = int(np.ceil(m))
 #        b=1
@@ -142,11 +209,11 @@ while True:
         for (x,y) in hist.pop():
             pat[x,y]=1
 
-        lmax = lifespan(pat,advance)
+        lmax = adv.pop()
         t0 = time.time()
-        k=1
         backtrack=False
         r = max(args.radius,np.sqrt(pat.population)) # radius
         rs = int(args.sigma*r)
         d = pat[-rs:rs,-rs:rs].population / ((2*rs)**2) # 3-sigma radius, each side is sigma*(r+r)
         log('BACKTRACK',n,k,lmax,m,pat.population,d,r,patience,keep,advance,mut,push)
+        k=1

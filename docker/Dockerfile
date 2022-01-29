@@ -15,5 +15,6 @@ RUN pip install pygments prompt_toolkit
 RUN pip install jupyterlab
 RUN apt-get update && apt-get install -y expect
 RUN pip3 install matplotlib
+RUN pip3 install scipy
 
 RUN ldconfig
