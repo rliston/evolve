@@ -33,68 +33,13 @@ def lifespan(pat,lmax):
         period=17
         pat = pat.advance(lmax) # jump to lmax
         pt = [pat.advance(k).population for k in range(1,period)] # population trace up to period
-        value,counts = np.unique(pt, return_counts=True)
-        e = entropy(counts)
-        if e>2:
+        value,counts = np.unique(pt, return_counts=True) # histogram of population trace
+        e = entropy(counts) # entropy of population distribution
+        if e>2: # ?
             #print(e,pt)
             return lmax+period
         else:
             return lmax
-        #e = int(period*e)
-        #print(e,pt)
-        #return lmax
-#        print(e,int(period*e),pt)
-#        return lmax
-#        if e>.1:
-#            print(e,int(period*e),pt)
-#            return int(lmax+period*e)
-#        else:
-#            return lmax
-#
-#        sl = len(set(pt))
-#        if sl>2:
-#            print(lmax,sl,sum(pt),pt)
-#            return lmax+sl
-#        else:
-#            print('FAIL',lmax,sl,sum(pt),pt)
-#            return lmax
-
-#        last=0
-#        itot=lmax
-#        for i in range(10000):
-#            pat = pat.advance(i%17)
-#            itot+=i%17
-#            if pat.population == last:
-#                return itot
-#            else:
-#                last=pat.population
-#        return -1
-
-## run soup until population is stable
-#def lifespan(pat,advance):
-#    period=20
-#    #pat = pat.advance(period)
-#    s=0
-#    for i in range(1000000//advance):
-#        ph=[]
-#        #for k in range(20):
-#        #    pat = pat.advance(1)
-#        #    ph.append(pat.population)
-#        ph = [pat.advance(k).population for k in range(period)] # population trace up to period
-#        s0=sum(ph)
-#        print(s,s0,ph)
-#        if s0==s:
-#            return(i*advance)
-#        else:
-#            s=s0
-#            
-#        #ll = len(ph)
-#        #sl = len(set(ph))
-#        #if ll>sl and sl>1:
-#        #    #print(ll,sl,ph)
-#        #    return sl+i*advance-1
-#        pat = pat.advance(advance)
-#    return -1
 
 sess = lifelib.load_rules("b3s23")
 lt = sess.lifetree(memory=args.memory) # 50GB RAM
@@ -116,20 +61,20 @@ while True:
     k+=1
     #patience = 100+lmax
     patience = args.patience
-    #keep = k/patience
-    keep=0
+    keep = k/patience
+    #keep=0.5
     #keep = 0.1
     #advance = 2**int(np.log(1+lmax))
-    if lmax < 100:
-        advance = 1
-    elif lmax < 1000:
-        advance = 10
-    elif lmax < 10000:
-        advance = 100
-    else:
-        advance = 100
+#    if lmax < 100:
+#        advance = 1
+#    elif lmax < 1000:
+#        advance = 10
+#    elif lmax < 10000:
+#        advance = 100
+#    else:
+#        advance = 100
 
-    #advance = args.advance
+    advance = args.advance
 
     #r = 1.414+np.sqrt(pat.population) # radius
     #r = args.radius+np.sqrt(pat.population) # radius
