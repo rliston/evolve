@@ -8,9 +8,11 @@ from scipy.stats import entropy
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--space', help='grid spacing', default=100, type=int)
 parser.add_argument('--timeout', help='stopping limit', default=99999999, type=int)
 parser.add_argument('--patience', help='stopping limit', default=10000, type=int)
-parser.add_argument('--advance', help='step size', default=100, type=int)
+parser.add_argument('--keep', help='harmless mutation rate', default=None, type=float)
+#parser.add_argument('--advance', help='step size', default=100, type=int)
 parser.add_argument('--radius', help='initial radius', default=1.0, type=float)
 parser.add_argument('--sigma', help='sample area for density calculation', default=3, type=float)
 parser.add_argument('--results', help='results directory', default='./results')
@@ -25,21 +27,26 @@ random.seed(args.seed)
 np.random.seed(args.seed)
 print(args)
 
-def log(hdr,n,k,l,m,pop,d,r,patience,keep,advance,mut,push):
-    print('{:10} wall {} n {:6d} k {:6d} \033[1mLIFE\033[0m {:6d} pop {:6d} m {:6d} r {:12.8f} density {:12.8f} patience {:12.0f} keep {:12.8f} mut {:6d} push {:6d} advance {:6d}'.format(hdr,datetime.datetime.now(),n,k,l,pop,m,r,d,patience,keep,mut,push,advance))
+def log(hdr,n,k,l,m,pop,d,r,patience,keep,nmax,mut,push):
+    print('{:10} wall {} n {:6d} k {:6d} \033[1mLIFE\033[0m {:6d} pop {:6d} m {:6d} r {:12.8f} density {:12.8f} patience {:12.0f} keep {:12.8f} mut {:6d} push {:6d} nmax {:6d}'.format(hdr,datetime.datetime.now(),n,k,l,pop,m,r,d,patience,keep,mut,push,nmax))
 
 # run soup until population is stable
 def lifespan(pat,lmax):
-        period=17
-        pat = pat.advance(lmax) # jump to lmax
-        pt = [pat.advance(k).population for k in range(1,period)] # population trace up to period
-        value,counts = np.unique(pt, return_counts=True) # histogram of population trace
-        e = entropy(counts) # entropy of population distribution
-        if e>2: # ?
+        period=100
+        pt = np.zeros(period)
+        o = max(0,lmax-period)
+        pat = pat.advance(o) # jump to lmax
+        for j in range(1000000//period):
+            for k in range(period):
+                pt[k] = pat.population
+                pat = pat.advance(1)
+            #pt = [pat.advance(k).population for k in range(1,period)] # population trace up to period
+            value,counts = np.unique(pt, return_counts=True) # histogram of population trace
+            e = entropy(counts,base=None) # entropy of population distribution 
             #print(e,pt)
-            return lmax+period
-        else:
-            return lmax
+            if e<0.6827*np.log(period): # threshold
+                return max(0,o+j*period)
+        return -1
 
 sess = lifelib.load_rules("b3s23")
 lt = sess.lifetree(memory=args.memory) # 50GB RAM
@@ -49,11 +56,21 @@ nrun=0 # runaway count
 n=0
 k=0
 lmax=0
+nmax=0
 mut=0
 push=0
 hist=[]
 adv=[]
 t0=time.time()
+#grid=[(x,y) for x in range(-100,200,100) for y in range(-100,200,100)]
+side=2
+space=args.space
+grid=[(x,y) for x in range(-side*space,side*space+space,space) for y in range(-side*space,side*space+space,space)]
+#grid=[(0,0)]
+print(grid,len(grid))
+#grid=[(-25,0),(25,0),(0,-25),(0,25)]
+#grid=[(-50,0),(50,0),(0,-50),(0,50)]
+#grid=[(-100,0),(100,0),(0,-100),(0,100)]
 
 while True:
     backtrack = False
@@ -61,9 +78,14 @@ while True:
     k+=1
     #patience = 100+lmax
     patience = args.patience
-    keep = k/patience
+    if args.keep is None:
+        keep = k/patience
+    else:
+        keep = args.keep
     #keep=0.5
-    #keep = 0.1
+    #keep=0
+    #keep=1
+    # keep = 0.1
     #advance = 2**int(np.log(1+lmax))
 #    if lmax < 100:
 #        advance = 1
@@ -74,11 +96,12 @@ while True:
 #    else:
 #        advance = 100
 
-    advance = args.advance
+    #advance = args.advance
 
     #r = 1.414+np.sqrt(pat.population) # radius
     #r = args.radius+np.sqrt(pat.population) # radius
-    r = max(args.radius,np.sqrt(pat.population)) # radius
+    #r = max(args.radius,np.sqrt(pat.population)) # radius
+    r = max(args.radius,np.sqrt(pat.population/len(grid))) # radius
 
     # apply random mutations
     m = random.expovariate(1)
@@ -86,7 +109,8 @@ while True:
     # m = int(m*r)
     #m = random.randint(1,int(1+r))
 
-    xy=[(int(random.normalvariate(0,r)),int(random.normalvariate(0,r))) for i in range(m)]
+    (x0,y0) = random.choice(grid)
+    xy=[(int(x0+random.normalvariate(0,r)),int(y0+random.normalvariate(0,r))) for i in range(m)]
     for (x,y) in xy:
         pat[x,y] ^= 1
 
@@ -98,7 +122,7 @@ while True:
     d = pat[-rs:rs,-rs:rs].population / ((2*rs)**2) # 3-sigma radius, each side is sigma*(r+r)
 
     if l<0: # RUNAWAY
-        log('RUNAWAY',n,k,l,m,pat.population,d,r,patience,keep,advance,mut,push)
+        log('RUNAWAY',n,k,l,m,pat.population,d,r,patience,keep,nmax,mut,push)
         pat.save('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         for (x,y) in xy:
             pat[x,y] ^= 1 # revert
@@ -108,10 +132,11 @@ while True:
 
     elif l>lmax: # keep the mutation
         mut+=m
-        log('BEST',n,k,l,m,pat.population,d,r,patience,keep,advance,mut,push)
+        log('BEST',n,k,l,m,pat.population,d,r,patience,keep,nmax,mut,push)
         if not args.summary:
             pat.write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         lmax = l
+        nmax += 1
         hist.append(pat.coords())
         adv.append(lmax)
         k=1
@@ -129,23 +154,30 @@ while True:
             pat[x,y] ^= 1 # revert
 
     if args.verbose and n%1000==0:
-        log('',n,k,l,m,pat.population,d,r,patience,keep,advance,mut,push)
+        log('',n,k,l,m,pat.population,d,r,patience,keep,nmax,mut,push)
 
     if k>patience: # reset if stuck
-        #log('FINAL',n,k,lmax,m,pat.population,d,r,patience,keep,advance,mut,push)
+        #log('FINAL',n,k,lmax,m,pat.population,d,r,patience,keep,nmax,mut,push)
         #pat.save('{}/final_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,lmax,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         backtrack=True
 
     if time.time()-t0 > args.timeout: # time based stopping for experimentation
-        log('TIMEOUT',n,k,lmax,m,pat.population,d,r,patience,keep,advance,mut,push)
+        log('TIMEOUT',n,k,lmax,m,pat.population,d,r,patience,keep,nmax,mut,push)
         pat.save('{}/timeout_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,lmax,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
         backtrack=True
 
     if backtrack:
         if len(hist)==0:
+            print("BACKTRACK STACK EMPTY")
             break
-        #b = random.expovariate(1)
-        #b = int(np.ceil(m))
+
+#        b = random.expovariate(1)
+#        b = int(np.ceil(m))
+#        for j in range(b):
+#            if len(hist)>1:
+#                hist.pop()
+#                adv.pop() # actually lmax
+
 #        b=1
 #        if len(hist) < b+1:
 #            break
@@ -155,10 +187,17 @@ while True:
             pat[x,y]=1
 
         lmax = adv.pop()
+        nmax=0
         t0 = time.time()
         backtrack=False
-        r = max(args.radius,np.sqrt(pat.population)) # radius
+        r = max(args.radius,np.sqrt(pat.population/len(grid))) # radius
         rs = int(args.sigma*r)
         d = pat[-rs:rs,-rs:rs].population / ((2*rs)**2) # 3-sigma radius, each side is sigma*(r+r)
-        log('BACKTRACK',n,k,lmax,m,pat.population,d,r,patience,keep,advance,mut,push)
+        log('BACKTRACK',n,k,lmax,m,pat.population,d,r,patience,keep,nmax,mut,push)
         k=1
+
+    if nmax > 1000:
+        log('GROWTH',n,k,l,m,pat.population,d,r,patience,keep,nmax,mut,push)
+        pat.write_rle('{}/growth_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+        nmax=0
+        backtrack=True
