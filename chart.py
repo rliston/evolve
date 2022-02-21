@@ -33,15 +33,32 @@ def parselog(fn,field):
     return np.array(a)
 
 n = parselog(args.log,3)
-life = parselog(args.log,7)
+life = parselog(args.log,5)
+lmax = parselog(args.log,7)
 pop = parselog(args.log,9)
+#k = parselog(args.log,15)
 
 print(n.shape,n[0:10])
-print(life.shape,life[0:10])
-print(pop.shape,pop[0:10])
+
+fig, (ax2,ax3) = plt.subplots(2,figsize=(5,40))
+
+#ax2 = ax1.twinx()
+#ax1.plot(n, e, 'g-')
+ax2.plot(n, pop, 'b-')
+ax3.plot(n,life,'k')
+ax3.plot(n,lmax,'r')
+
+ax2.set_xlabel('n')
+#ax1.set_ylabel('entropy', color='g')
+ax2.set_ylabel('population', color='b')
+ax3.set_ylabel('lmax', color='r')
+plt.show()
+
+
+exit()
 
 plt.xlabel('generation')
-plt.plot(n,life,label='lifetime')
+plt.plot(n,e,label='entropy')
 plt.plot(n,pop,label='initial population')
 plt.legend(loc='best')
 plt.show()
