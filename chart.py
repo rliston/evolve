@@ -40,9 +40,9 @@ pop = parselog(args.log,9)
 
 print(n.shape,n[0:10])
 
-fig, (ax2,ax3) = plt.subplots(2,figsize=(5,40))
+fig, (ax2,ax3) = plt.subplots(2,sharex=True,figsize=(10,40))
 
-#ax2 = ax1.twinx()
+#ax3 = ax2.twinx()
 #ax1.plot(n, e, 'g-')
 ax2.plot(n, pop, 'b-')
 ax3.plot(n,life,'k')

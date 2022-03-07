@@ -1,5 +1,5 @@
 while true
 do
     current_time=$(date "+%Y.%m.%d-%H.%M.%S")
-    unbuffer python3 hello.py --ipop 80000 --radius 400 --backtrack 10 --batch 400 --period 100 |& tee results/log.$current_time
+    unbuffer python3 hello.py --gamma 0.5 --minrad 50 --ipop 0 --backtrack 100 --batch 100 --period 100 |& tee results/log.$current_time
 done
