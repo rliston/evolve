@@ -9,8 +9,10 @@ import os
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--init', help='initial pattern', default=None, type=str)
 parser.add_argument('--density', help='density target', default=0.682689492, type=float)
-parser.add_argument('--prefill', help='prefill radius', default=0, type=float)
+#parser.add_argument('--effort', help='number of mutations to try before growing radius', default=10000, type=int)
+#parser.add_argument('--prefill', help='prefill radius', default=0, type=float)
 #parser.add_argument('--decay', help='lmax decay per n', default=1.000000, type=float)
 #parser.add_argument('--tol', help='tolerance', default=0.99, type=float)
 parser.add_argument('--rad', help='minimum radius', default=1, type=float)
@@ -61,11 +63,13 @@ np.random.seed(args.seed)
 #args.batch = int(args.radius)
 print(args)
 
-def log(hdr,n,e,lmax,m,pop,r,l,etol,k,rank=0):
-    print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} lmax {:12.4f} pop {:6d} m {:6d} r {:12.8f} rank {:6d} etol {:12.8f}'.format(hdr,datetime.datetime.now(),n,k,e,lmax,pop,m,r,rank,etol))
+def log(hdr,n,e,lmax,m,pop,r,l,r0,k,rank=0):
+    print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} lmax {:12.4f} pop {:6d} m {:6d} r {:12.8f} rank {:6d} r0 {:12.8f}'.format(hdr,datetime.datetime.now(),n,k,e,lmax,pop,m,r,rank,r0))
 
 def radius(pop):
-    return max(args.rad,np.sqrt(((1-args.density)*pop)/np.pi)) # pi*r^2 = 0.68*pop
+    return args.density*np.sqrt(pop/np.pi) # pi*r^2 = pop
+    #return np.sqrt(((1-args.density)*pop)/np.pi) # pi*r^2 = 0.68*pop
+    #return max(args.rad,np.sqrt(((1-args.density)*pop)/np.pi)) # pi*r^2 = 0.68*pop
     #return min(args.rad,np.sqrt((0.682689492*pop)/np.pi)) # pi*r^2 = 0.68*pop, CAP AT args.rad
     #return max(args.rad,np.sqrt((args.density*pop)/np.pi)) # pi*r^2 = 0.68*pop
     #return max(args.rad,np.sqrt(pop/np.pi))
@@ -108,10 +112,16 @@ def lifespan(pat,period,lmax):
 
 sess = lifelib.load_rules("b3s23")
 lt = sess.lifetree(memory=args.memory)
-pat = lt.pattern()
+#pat = lt.pattern()
+if args.init is None:
+    pat = lt.pattern()
+else:
+    pat = lt.load(args.init) # empty pattern if None, else load .rle file
+
 lmax=0
 ath=0
 n=0
+k=0
 #t0=time.time()
 #n0=0
 #h=[]
@@ -119,32 +129,47 @@ fn=None
 
 #while pat.population < (args.prefill*args.prefill*np.pi)/0.682689492:
 #    pat[np.random.normal(0,args.prefill,size=1)] |= 1;
-pat[np.random.normal(0,args.prefill,size=[int((args.prefill*args.prefill*np.pi)/0.682689492),2])] |= 1
-print('prefill pop',pat.population)
-
+#pat[np.random.normal(0,args.prefill,size=[int((args.prefill*args.prefill*np.pi)/0.682689492),2])] |= 1
+#print('prefill pop',pat.population)
+r = args.rad
 while True:
-    r = radius(pat.population)
     n+=1
+    k+=1
+    r0 = radius(pat.population)
+    r = max(args.rad,r0)
+#    if k>args.effort:
+#        r = radius(pat.population)
+#        log('GROW',n,l,lmax,len(xy),pat.population,r,ath,0,k)
+#        k=0
+#        fn = '{}/grow_E{:08.0f}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,lmax,int(lmax),args.seed,n)
+#        pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+#    else:
+#        k+=1
     #asteroid = np.random.standard_exponential()
     #lmax /= asteroid
     xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(1))),2])
     pat[xy] ^=1 # apply mutation xy
     l = lifespan(pat,100,lmax)
     if l<0:
-        log('RUNAWAY',n,l,lmax,len(xy),pat.population,r,ath,0,n)
+        log('RUNAWAY',n,l,lmax,len(xy),pat.population,r,ath,0,k)
         bb = pat.bounding_box
         pat.write_rle('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
         pat[xy] ^=1 # revert mutation xy
+        bb = pat.bounding_box
+        pat.write_rle('{}/snapshot_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
         #lmax *= asteroid
     elif l>=lmax:
-        log('BEST',n,l,lmax,len(xy),pat.population,r,ath,0,n,0)
+        log('BEST',n,l,lmax,len(xy),pat.population,r,ath,r0,k)
+        k=0
         lmax=l
         bb = pat.bounding_box
         if lmax>ath:
-            log('ATH',n,lmax,lmax,len(xy),pat.population,r,ath,0,n,0)
+            log('ATH',n,lmax,lmax,len(xy),pat.population,r,ath,r0,k)
             ath = lmax;
             fn = '{}/ath_E{:08.0f}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,lmax,int(lmax),args.seed,n)
             pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+            fn = '{}/ath_E{:08.0f}_L{:06d}_seed{:09d}_n{:09d}_init.rle'.format(args.results,lmax,int(lmax),args.seed,n)
+            pat.write_rle(fn, header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
     else:
         pat[xy] ^=1 # revert mutation xy
         #lmax *= asteroid

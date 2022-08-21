@@ -33,11 +33,12 @@ def parselog(fn,field):
     return np.array(a)
 
 n = parselog(args.log,3)
-ent = parselog(args.log,5)
-life = parselog(args.log,15)
-pop = parselog(args.log,9)
+ent = parselog(args.log,9)
+life = parselog(args.log,7)
+pop = parselog(args.log,11)
 #bt = parselog(args.log,9+8)
-#k = parselog(args.log,15)
+r = parselog(args.log,15)
+r0 = parselog(args.log,19)
 
 print(n.shape,n[0:10])
 
@@ -45,15 +46,18 @@ fig, (ax1,ax2,ax3) = plt.subplots(3,sharex=True,figsize=(10,40))
 #fig, (ax1,ax2) = plt.subplots(2,sharex=True,figsize=(10,40))
 
 #ax3 = ax2.twinx()
-ax1.plot(n, ent, 'g-')
-ax2.plot(n, life, 'b-')
-ax3.plot(n,pop,'r-')
+#ax1.plot(pop[0:len(n)],life[0:len(n)],'g-')
+ax1.plot(n,r0[0:len(n)],'g-')
+ax2.plot(n,pop[0:len(n)],'r-')
+ax3.plot(n, life[0:len(n)], 'b-')
 #ax3.plot(n,lmax,'r')
 
 ax2.set_xlabel('n')
-ax1.set_ylabel('entropy', color='g')
-ax2.set_ylabel('lifespan', color='b')
-ax3.set_ylabel('population', color='r')
+ax3.set_xlabel('n')
+ax1.set_xlabel('n')
+ax1.set_ylabel('radius', color='g')
+ax3.set_ylabel('lifespan', color='b')
+ax2.set_ylabel('population', color='r')
 plt.show()
 
 
