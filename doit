@@ -1,7 +1,11 @@
 while true
 do
     current_time=$(date "+%Y.%m.%d-%H.%M.%S")
-    unbuffer python3 entropy.py --density 0.5 --seed 106724 |& tee results/log.$current_time
+    unbuffer python3 entropy.py --rad 50 --advance 5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --density 0.682689492 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 2.718281828 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init results/ath_E00105700_L105700_seed000106724_n048787598.rle --density 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --density 0.5 --seed 106724 |& tee results/log.$current_time
     #unbuffer python3 entropy.py --density 0.5 --init results/ath_E00030800_L030800_seed000106724_n007104318.rle |& tee results/log.$current_time
     #unbuffer python3 entropy.py --density 0.5 |& tee results/log.$current_time
     #unbuffer python3 entropy.py --density 0.5 --rad 1 |& tee results/log.$current_time

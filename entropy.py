@@ -10,12 +10,14 @@ import os
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--init', help='initial pattern', default=None, type=str)
-parser.add_argument('--density', help='density target', default=0.682689492, type=float)
+#parser.add_argument('--density', help='density target', default=0.682689492, type=float)
+parser.add_argument('--rad', help='minimum radius', default=1, type=float)
+parser.add_argument('--advance', help='# gen to advance on ATH', default=1, type=int)
 #parser.add_argument('--effort', help='number of mutations to try before growing radius', default=10000, type=int)
 #parser.add_argument('--prefill', help='prefill radius', default=0, type=float)
 #parser.add_argument('--decay', help='lmax decay per n', default=1.000000, type=float)
 #parser.add_argument('--tol', help='tolerance', default=0.99, type=float)
-parser.add_argument('--rad', help='minimum radius', default=1, type=float)
+#parser.add_argument('--grate', help='growth rate', default=100, type=float)
 #parser.add_argument('--step', help='# gen per step for entropy calculation', default=1, type=int)
 #parser.add_argument('--timeout', help='timeout in units of n', default=10000, type=int)
 #parser.add_argument('--gen', help='initial generation', default=0, type=int)
@@ -66,8 +68,12 @@ print(args)
 def log(hdr,n,e,lmax,m,pop,r,l,r0,k,rank=0):
     print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} lmax {:12.4f} pop {:6d} m {:6d} r {:12.8f} rank {:6d} r0 {:12.8f}'.format(hdr,datetime.datetime.now(),n,k,e,lmax,pop,m,r,rank,r0))
 
-def radius(pop):
-    return args.density*np.sqrt(pop/np.pi) # pi*r^2 = pop
+def radius(pop, n):
+    return args.rad
+    #return args.rad+(np.sqrt(n)/args.grate)
+    #return 1+(n/10000000.)
+    #return args.density*np.sqrt(pop/np.pi) # pi*r^2 = pop
+
     #return np.sqrt(((1-args.density)*pop)/np.pi) # pi*r^2 = 0.68*pop
     #return max(args.rad,np.sqrt(((1-args.density)*pop)/np.pi)) # pi*r^2 = 0.68*pop
     #return min(args.rad,np.sqrt((0.682689492*pop)/np.pi)) # pi*r^2 = 0.68*pop, CAP AT args.rad
@@ -119,6 +125,7 @@ else:
     pat = lt.load(args.init) # empty pattern if None, else load .rle file
 
 lmax=0
+pmax=0
 ath=0
 n=0
 k=0
@@ -135,7 +142,7 @@ r = args.rad
 while True:
     n+=1
     k+=1
-    r0 = radius(pat.population)
+    r0 = radius(pat.population,n)
     r = max(args.rad,r0)
 #    if k>args.effort:
 #        r = radius(pat.population)
@@ -166,13 +173,20 @@ while True:
         if lmax>ath:
             log('ATH',n,lmax,lmax,len(xy),pat.population,r,ath,r0,k)
             ath = lmax;
-            fn = '{}/ath_E{:08.0f}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,lmax,int(lmax),args.seed,n)
+            fn = '{}/ath_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,pmax,int(lmax),args.seed,n)
             pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
-            fn = '{}/ath_E{:08.0f}_L{:06d}_seed{:09d}_n{:09d}_init.rle'.format(args.results,lmax,int(lmax),args.seed,n)
-            pat.write_rle(fn, header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
+            pat = pat.advance(2)
+            #fn = '{}/ath_P{:06d}_L{:06d}_seed{:09d}_n{:09d}_init.rle'.format(args.results,pmax,int(lmax),args.seed,n)
+            #pat.write_rle(fn, header=None, footer=None, comments=str(args), file_format='rle', save_comments=True)
     else:
         pat[xy] ^=1 # revert mutation xy
         #lmax *= asteroid
+
+    if pat.population > pmax:
+        pmax = pat.population
+        log('POP',n,lmax,lmax,len(xy),pat.population,r,ath,r0,k)
+        fn = '{}/pop_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,pmax,int(lmax),args.seed,n)
+        pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
 
 #    b=[]
 #    for k in range(args.batch):

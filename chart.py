@@ -33,6 +33,7 @@ def parselog(fn,field):
     return np.array(a)
 
 n = parselog(args.log,3)
+k = parselog(args.log,5)
 ent = parselog(args.log,9)
 life = parselog(args.log,7)
 pop = parselog(args.log,11)
@@ -42,7 +43,13 @@ r0 = parselog(args.log,19)
 
 print(n.shape,n[0:10])
 
-fig, (ax1,ax2,ax3) = plt.subplots(3,sharex=True,figsize=(10,40))
+fig = plt.figure(figsize=(10,40))
+ax1 = fig.add_subplot(4,1,1)
+ax2 = fig.add_subplot(4,1,2, sharex = ax1)
+ax3 = fig.add_subplot(4,1,3, sharex = ax1, sharey = None)
+ax4 = fig.add_subplot(4,1,4)
+
+#fig, (ax1,ax2,ax3) = plt.subplots(3,sharex=True,figsize=(10,40))
 #fig, (ax1,ax2) = plt.subplots(2,sharex=True,figsize=(10,40))
 
 #ax3 = ax2.twinx()
@@ -50,6 +57,7 @@ fig, (ax1,ax2,ax3) = plt.subplots(3,sharex=True,figsize=(10,40))
 ax1.plot(n,r0[0:len(n)],'g-')
 ax2.plot(n,pop[0:len(n)],'r-')
 ax3.plot(n, life[0:len(n)], 'b-')
+ax4.hist(k, bins=500, range=(0,5000), density=True, label='k')
 #ax3.plot(n,lmax,'r')
 
 ax2.set_xlabel('n')
