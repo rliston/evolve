@@ -1,7 +1,32 @@
 while true
 do
     current_time=$(date "+%Y.%m.%d-%H.%M.%S")
-    unbuffer python3 entropy.py --rad 50 --advance 5 |& tee results/log.$current_time
+    unbuffer python3 entropy.py --flip_pos 100 --flip_neg 100 --rad 10 --bang 0.0 --direction 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --flip_pos 2 --flip_neg 3 --rad 100 --bang 0.0 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --flip_pos 4 --flip_neg 6 --rad 100 --bang 0.0 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 200 --choice --pos 0.10 --neg 0.0 --bang 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 100 --density 0.1 --bang 0.1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 200 --density 0.0287115 --bang 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 100 --density 0.682689492 --bang 0.682689492 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 100 --density 0.0287 --bang 1.0 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 100 --density 0.0287 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 100 --density 0.100 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --density 0.317310508 --patience 1000 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init results/init.rle --mode_mut --rad 200 --advance 5 --nmut 20000 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --mode_mut --advance 1 --nmut 10000 --rad 100 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --mode_ath --rad 1.618 --density 0.5 --advance 100 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --mode_ath --rad 1.618 --density 0.317310508 --advance 100 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init results/init2.rle --mode_ath --rad 10 --density 0.317310508 --advance 100 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --mode_ath --rad 1.414 --density 0.317310508 --advance 100 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --mode_ath --rad 50 --advance 100 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --density 0.5 --mode_pop --advance 1 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --mode_pop --advance 10 --rad 1.414 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --mode_pop --advance 5 --rad 2.718 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --mode_mut --rad 2.718 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --mode_ath --rad 2.718 --advance 4 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --seed 442174 --mode_ath --rad 10 --advance 4 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --density 0.682689492 --mode_ath --rad 2 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --mode_ath --mode_mut --nmut 1000 --rad 20 --advance 2 |& tee results/log.$current_time
     #unbuffer python3 entropy.py --density 0.682689492 |& tee results/log.$current_time
     #unbuffer python3 entropy.py --rad 2.718281828 |& tee results/log.$current_time
     #unbuffer python3 entropy.py --init results/ath_E00105700_L105700_seed000106724_n048787598.rle --density 0.5 |& tee results/log.$current_time

@@ -3,6 +3,7 @@ import argparse
 import numpy as np ; print('numpy ' + np.__version__)
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator
+from matplotlib.ticker import FuncFormatter
 
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--log',help='log file name',default=None)
@@ -22,42 +23,62 @@ def parselog(fn,field):
             r = l[15:].split()
             #print(r)
             #print(r[field],r)
-            alphanumeric=''
-            for character in r[field]:
-                if character.isdecimal():
-                    alphanumeric += character
-            #print(alphanumeric,len(alphanumeric))
-            if len(alphanumeric)==0:
+            try:
+                a.append(float(r[field]))
+            except:
                 break
-            a.append(float(alphanumeric))
+
+#            alphanumeric=''
+#            for character in r[field]:
+#                #if character.isdecimal() or character=='.':
+#                if character in ['0','1','2','3','4','5','6','7','8','9','.']:
+#                    alphanumeric += character
+#            #print(alphanumeric,len(alphanumeric))
+#            if len(alphanumeric)==0:
+#                break
+#            a.append(float(alphanumeric))
     return np.array(a)
 
+#BEST       wall 2022-10-12 11:31:04.221735 n      1 k      1 LIFE       0.0000 lmax       0.0000 pop      1 m      1 r   2.71800000 pmax      0
 n = parselog(args.log,3)
 k = parselog(args.log,5)
-ent = parselog(args.log,9)
 life = parselog(args.log,7)
+lmax = parselog(args.log,9)
 pop = parselog(args.log,11)
-#bt = parselog(args.log,9+8)
+m = parselog(args.log,13)
 r = parselog(args.log,15)
-r0 = parselog(args.log,19)
+pmax = parselog(args.log,17)
+d = parselog(args.log,21)
 
 print(n.shape,n[0:10])
 
 fig = plt.figure(figsize=(10,40))
 ax1 = fig.add_subplot(4,1,1)
-ax2 = fig.add_subplot(4,1,2, sharex = ax1)
-ax3 = fig.add_subplot(4,1,3, sharex = ax1, sharey = None)
-ax4 = fig.add_subplot(4,1,4)
+ax2 = fig.add_subplot(4,1,2,sharex=ax1)
+ax3 = fig.add_subplot(4,1,3,sharex=ax1)
+ax4 = fig.add_subplot(4,1,4,sharex=ax1)
 
+#ax2 = fig.add_subplot(4,1,2, sharex = ax1)
+#ax3 = fig.add_subplot(4,1,3, sharex = ax1)
 #fig, (ax1,ax2,ax3) = plt.subplots(3,sharex=True,figsize=(10,40))
 #fig, (ax1,ax2) = plt.subplots(2,sharex=True,figsize=(10,40))
 
 #ax3 = ax2.twinx()
 #ax1.plot(pop[0:len(n)],life[0:len(n)],'g-')
-ax1.plot(n,r0[0:len(n)],'g-')
+#ax1.set_ylim(auto=True)
+#ax2.set_ylim(auto=True)
+#ax3.set_ylim(auto=True)
+#ax4.set_ylim(auto=True)
+ax1.plot(n,r[0:len(n)],'g-')
 ax2.plot(n,pop[0:len(n)],'r-')
 ax3.plot(n, life[0:len(n)], 'b-')
-ax4.hist(k, bins=500, range=(0,5000), density=True, label='k')
+ax4.plot(n, d[0:len(n)], 'k-')
+#ax4.hist(k, bins=500, density=True, label='k')
+
+#ax4.hist(k, bins=500, range=(0,500), density=True, label='k')
+#ax1.yaxis.set_major_formatter(FuncFormatter(lambda x, p: '{:.0f}'.format(x)))
+ax1.yaxis.set_major_formatter(FuncFormatter(lambda x, p: '{:5.2f}'.format(x)))
+
 #ax3.plot(n,lmax,'r')
 
 ax2.set_xlabel('n')
@@ -66,6 +87,7 @@ ax1.set_xlabel('n')
 ax1.set_ylabel('radius', color='g')
 ax3.set_ylabel('lifespan', color='b')
 ax2.set_ylabel('population', color='r')
+ax4.set_ylabel('density', color='k')
 plt.show()
 
 
