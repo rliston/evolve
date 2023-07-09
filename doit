@@ -1,65 +1,168 @@
 while true
 do
     current_time=$(date "+%Y.%m.%d-%H.%M.%S")
-    unbuffer python3 entropy.py --flip_pos 100 --flip_neg 100 --rad 10 --bang 0.0 --direction 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --flip_pos 2 --flip_neg 3 --rad 100 --bang 0.0 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --flip_pos 4 --flip_neg 6 --rad 100 --bang 0.0 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --rad 200 --choice --pos 0.10 --neg 0.0 --bang 0.5 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --rad 100 --density 0.1 --bang 0.1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --rad 200 --density 0.0287115 --bang 0.5 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --rad 100 --density 0.682689492 --bang 0.682689492 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --rad 100 --density 0.0287 --bang 1.0 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --rad 100 --density 0.0287 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --rad 100 --density 0.100 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.317310508 --patience 1000 --rad 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --init results/init.rle --mode_mut --rad 200 --advance 5 --nmut 20000 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --mode_mut --advance 1 --nmut 10000 --rad 100 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --mode_ath --rad 1.618 --density 0.5 --advance 100 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --mode_ath --rad 1.618 --density 0.317310508 --advance 100 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --init results/init2.rle --mode_ath --rad 10 --density 0.317310508 --advance 100 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --mode_ath --rad 1.414 --density 0.317310508 --advance 100 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --mode_ath --rad 50 --advance 100 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.5 --mode_pop --advance 1 --rad 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --mode_pop --advance 10 --rad 1.414 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --mode_pop --advance 5 --rad 2.718 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --mode_mut --rad 2.718 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --mode_ath --rad 2.718 --advance 4 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --seed 442174 --mode_ath --rad 10 --advance 4 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.682689492 --mode_ath --rad 2 --advance 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --mode_ath --mode_mut --nmut 1000 --rad 20 --advance 2 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.682689492 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --rad 2.718281828 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --init results/ath_E00105700_L105700_seed000106724_n048787598.rle --density 0.5 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.5 --seed 106724 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.5 --init results/ath_E00030800_L030800_seed000106724_n007104318.rle |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.5 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.5 --rad 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.682689492 --rad 1 --effort 10000 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.682689492 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.5 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --density 0.682689492 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --decay 0.682689492 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --decay 0.682689492 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --decay 0.999 --rad 20 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --decay 0.999 --rad 1.414 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --batch 200 --rad 1.414 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --seed 701695 --batch 100 --rad 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --gamma 0.0 --tol 0.01 --timeout 100000 --rad 150 --step 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --gamma 0.5 --tol 0.001 --timeout 100000 --rad 150 --step 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --summary --timeout 100000 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --tol 0.997300204 --timeout 20000 --rad 1 --step 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --tol 0.954499736 --timeout 10000 --rad 1.414 --period 10000 --gamma 0 --gen 0 --step 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --tol 0.682689492 --timeout 1000 --rad 1.414 --period 10000 --gamma 0 --gen 0 --step 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --tol 0.954499736 --timeout 1000 --rad 1.414 --period 1000 --gamma 0 --gen 0 --step 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --tol 0.8 --timeout 1000 --rad 10 --period 20000 --gamma 0 --gen 0 --step 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --tol 0.954499736 --timeout 1000 --rad 10 --period 20000 --gamma 0 --gen 0 --step 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --tol 0.682689492 --timeout 1000 --rad 100 --period 20000 --gamma 0 --gen 0 --step 1 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --tol 0.682689492 --timeout 1000 --rad 20 --period 20000 --gamma 0 --gen 0 --step 1 |& tee results/log.$current_time
-    #unbuffer python3 hello.py --watchdog 2 --gamma 2 --minrad 0 --ipop 0 --backtrack 0 --batch 20 --period 100 |& tee results/log.$current_time
-    #unbuffer python3 hello.py --watchdog 1.5 --gamma 2.718 --minrad 0 --ipop 0 --backtrack 10 --batch 100 --period 100 |& tee results/log.$current_time
-    #unbuffer python3 hello.py --watchdog 1.5 --gamma 1 --minrad 100 --ipop 300 --backtrack 10 --batch 100000 --period 100 |& tee results/log.$current_time
-    #unbuffer python3 hello.py --watchdog 1.5 --gamma 1 --minrad 100 --ipop 900 --backtrack 10 --batch 100 --period 100 |& tee results/log.$current_time
-    #unbuffer python3 hello.py --gamma 1 --minrad 100 --ipop 3600 --backtrack 10 --batch 100 --period 100 |& tee results/log.$current_time
-    #unbuffer python3 hello.py --gamma 1 --minrad 100 --ipop 900 --backtrack 10 --batch 100 --period 100 |& tee results/log.$current_time
-    #unbuffer python3 hello.py --gamma 1 --minrad 200 --ipop 3600 --backtrack 10 --batch 100 --period 100 |& tee results/log.$current_time
+    unbuffer python3 entropy.py --alt --rad 2 --minleaves 1 --rootlife 0 --backtrack 1 --init grid2 --sidex 25 --sidey 25 --spacex 25 --spacey 25 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt --rad 2 --minleaves 1 --rootlife 0 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt --rad 1 --minleaves 1 --rootlife 0 --init grid2 --sidex 800 --sidey 800 --spacex 25 --spacey 25 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt3 --rad 2 --minleaves 100 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt --rad 3 --minleaves 10000 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt --rad 2 --minleaves 10000 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --log --rad 1.414213562 --minleaves 10000 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --log --rad 1 --minleaves 10000 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 1 --minleaves 10000 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --log --rad 1.414213562 --minleaves 10000 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --log --rad 2 --minleaves 370 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --log --rad 1 --minleaves 10000 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --log --rad 1 --minleaves 22 --backtrack 1 --init grid2 --sidex 160 --sidey 160 --spacex 20 --spacey 20 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 2 --minleaves 22 --backtrack 1 --init grid2 --sidex 50 --sidey 50 --spacex 50 --spacey 50 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 0.682689492 --minleaves 7 --backtrack 5 --btboost 5 --init grid2 --sidex 50 --sidey 50 --spacex 50 --spacey 50 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 1 --minleaves 22 --backtrack 3 --btboost 3 --init grid2 --sidex 50 --sidey 50 --spacex 50 --spacey 50 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 1.414213562 --minleaves 22 --backtrack 1 --btboost 1.5 --init grid2 --sidex 50 --sidey 50 --spacex 50 --spacey 50 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 2.718281828 --minleaves 22 --backtrack 1 --init grid2 --sidex 50 --sidey 50 --spacex 50 --spacey 50 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 2 --minleaves 7 --backtrack 1 --init grid2 --sidex 100 --sidey 50 --spacex 50 --spacey 50 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --log --rad 0.5 --minleaves 1 --backtrack 1 --init grid2 --sidex 250 --sidey 250 --spacex 50 --spacey 50 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 0.5 --minleaves 1 --backtrack 1 --init grid2 --sidex 256 --sidey 256 --spacex 16 --spacey 16 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 0.5 --minleaves 1 --backtrack 1 --init normal --irad 200 --ipop 100 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 1 --minleaves 3 --backtrack 7 --init grid2 --sidex 128 --sidey 128 --spacex 4 --spacey 4 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 1 --minleaves 3 --backtrack 7 --init grid2 --sidex 512 --sidey 512 --spacex 16 --spacey 16 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 1 --minleaves 22 --backtrack 7 --init grid2 --sidex 150 --sidey 150 --spacex 50 --spacey 50 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 0.5 --minleaves 7 --backtrack 7 --init grid2 --sidex 128 --sidey 128 --spacex 8 --spacey 8 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --log --rad 2 --minleaves 1 --backtrack 22 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 2 --minleaves 22 --backtrack 22 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 0.5 --minleaves 22 --backtrack 22 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --log --rad 1 --orad 1 --minleaves 22 --backtrack 22 --init grid2 --sidex 32 --sidey 32 --spacex 32 --spacey 32 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --orad 0.5 --minleaves 22 --backtrack 22 --init grid2 --sidex 256 --sidey 32 --spacex 128 --spacey 32 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --binary --minleaves 22 --backtrack 22 --init grid2 --sidex 400 --sidey 200 --spacex 200 --spacey 200 --rad 4 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --square --minleaves 22 --topk 0 --backtrack 22 --init grid2 --sidex 300 --sidey 300 --spacex 100 --spacey 100 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --square --minpool 100 --topk 0 --backtrack 22 --init grid2 --sidex 300 --sidey 300 --spacex 100 --spacey 100 --rad 4 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --square --minpool 100 --topk 0 --backtrack 22 --init grid3 --orad 5 --keepout 50 --sidex 300 --sidey 300 --spacex 25 --spacey 25 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --minpool 370 --topk 3 --backtrack 22 --init grid3 --orad 5 --keepout 50 --sidex 300 --sidey 300 --spacex 25 --spacey 25 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --minpool 370 --topk 3 --backtrack 22 --init grid3 --orad 5 --keepout 50 --sidex 400 --sidey 400 --spacex 50 --spacey 50 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --minpool 370 --topk 3 --backtrack 22 --init grid2 --sidex 200 --sidey 50 --spacex 100 --spacey 50 --rad 4 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --keep --minpool 370 --topk 3 --backtrack 22 --init grid2 --sidex 50 --sidey 50 --spacex 50 --spacey 50 --rad 20 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --keep --minpool 22 --topk 2 --backtrack 22 --init grid2 --sidex 100 --sidey 50 --spacex 50 --spacey 50 --rad 4 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --keep --minpool 100 --topk 3 --backtrack 22 --init grid2 --sidex 150 --sidey 150 --spacex 50 --spacey 50 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --minpool 100 --topk 3 --backtrack 22 --init grid2 --sidex 150 --sidey 150 --spacex 50 --spacey 50 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --showtree --topk 3 --backtrack 22 --init grid2 --sidex 250 --sidey 250 --spacex 50 --spacey 50 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --showtree --square --topk 3 --backtrack 22 --init grid2 --sidex 256 --sidey 256 --spacex 32 --spacey 32 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --showtree --growth 1.0 --topk 3 --backtrack 22 --rad 50 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --square --keep --topk 3 --backtrack 22 --init grid2 --sidex 256 --sidey 256 --spacex 16 --spacey 16 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --lmax 40700 --square --keep --topk 3 --backtrack 22 --init results/ath_P000414_L040700_seed000488736_n000076313.rle --sidex 250 --sidey 250 --spacex 25 --spacey 25 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --boom --square --keep --topk 3 --backtrack 22 --init grid2 --sidex 250 --sidey 250 --spacex 25 --spacey 25 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --keep --topk 2 --backtrack 100 --init grid2 --sidex 160 --sidey 160 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --keep --topk 3 --backtrack 100 --init grid2 --sidex 2000 --sidey 1000 --spacex 100 --spacey 100 --rad 3 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --keep --topk 3 --backtrack 100 --init grid2 --sidex 2000 --sidey 1000 --spacex 50 --spacey 50 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 2 --square --backtrack 100 --init grid2 --sidex 200 --sidey 200 --spacex 10 --spacey 10 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --square --topk 1.0 --backtrack 100 --init grid2 --sidex 120 --sidey 120 --spacex 40 --spacey 40 --rad 3 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 0.5 --square --backtrack 100 --init grid2 --sidex 320 --sidey 320 --spacex 40 --spacey 40 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 1 --backtrack 100 --init grid2 --sidex 100 --sidey 100 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 0.682689492 --backtrack 22 --init grid2 --sidex 400 --sidey 400 --spacex 20 --spacey 20 --rad 0.682689492 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --showtree --backtrack 100 --init grid2 --sidex 40 --sidey 20 --spacex 20 --spacey 20 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --showtree --backtrack 370 --init grid2 --sidex 400 --sidey 20 --spacex 20 --spacey 20 --rad 1.414213562 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 0.75 --backtrack 22 --init grid2 --sidex 160 --sidey 160 --spacex 20 --spacey 20 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 0.5 --showtree --backtrack 10 --init grid2 --sidex 60 --sidey 60 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 0.5 --showtree --backtrack 10 --init grid2 --sidex 100 --sidey 100 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --showtree --topk 0.4 --backtrack 22 --init grid2 --sidex 100 --sidey 100 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 0.5 --backtrack 22 --init grid2 --sidex 150 --sidey 30 --spacex 30 --spacey 15 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 22 --backtrack 22 --init grid2 --sidex 400 --sidey 225 --spacex 25 --spacey 25 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 22 --backtrack 22 --rad 50 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 0.682689492 --backtrack 22 --init grid2 --sidex 60 --sidey 60 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid2 --sidex 150 --sidey 150 --spacex 50 --spacey 50 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid2 --sidex 2000 --sidey 1000 --spacex 50 --spacey 50 --rad 0.682689492 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --rad 20 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 0.0454545 --backtrack 22 --init grid2 --sidex 40 --sidey 20 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 0.2 --backtrack 22 --init grid2 --sidex 400 --sidey 400 --spacex 20 --spacey 20 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --topk 0.2 --backtrack 100 --init grid2 --sidex 40 --sidey 20 --spacex 20 --spacey 20 --rad 3 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 100 --init grid2 --sidex 40 --sidey 20 --spacex 20 --spacey 20 --rad 5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 100 --init grid2 --sidex 30 --sidey 30 --spacex 10 --spacey 10 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 100 --init grid2 --sidex 40 --sidey 40 --spacex 20 --spacey 20 --rad 2.718281828 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 100 --init grid2 --sidex 40 --sidey 20 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 22 --init grid2 --sidex 40 --sidey 20 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 370 --init grid2 --sidex 20 --sidey 20 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 370 --init grid2 --sidex 120 --sidey 120 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 370 --init grid2 --sidex 80 --sidey 80 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 64 --init grid2 --sidex 160 --sidey 160 --spacex 20 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 64 --init grid2 --sidex 160 --sidey 160 --spacex 20 --spacey 20 --rad 2.718281828 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 20 --init grid2 --sidex 256 --sidey 256 --spacex 16 --spacey 16 --rad 1.414213562 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 256 --init grid2 --sidex 192 --sidey 192 --spacex 12 --spacey 12 --rad 1.414213562 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 0.95 --backtrack 20 --init grid2 --sidex 72 --sidey 72 --spacex 12 --spacey 12 --rad 0.682689492 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid2 --sidex 600 --sidey 600 --spacex 15 --spacey 15 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid2 --sidex 600 --sidey 600 --spacex 15 --spacey 15 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid2 --sidex 600 --sidey 600 --spacex 15 --spacey 15 --rad 0.682689492 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 370 --init grid2 --sidex 400 --sidey 400 --spacex 10 --spacey 10 --rad 0.682689492 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 370 --init grid2 --sidex 200 --sidey 200 --spacex 10 --spacey 10 --rad 1.414213562 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid2 --sidex 400 --sidey 400 --spacex 20 --spacey 20 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 370 --init grid2 --sidex 200 --sidey 40 --spacex 100 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 370 --init grid2 --sidex 2000 --sidey 40 --spacex 200 --spacey 20 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 370 --init grid2 --sidex 1920 --sidey 300 --spacex 15 --spacey 150 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 370 --init grid2 --sidex 1920 --sidey 300 --spacex 15 --spacey 150 --rad 1.414213562 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 370 --init grid2 --sidex 200 --sidey 1000 --spacex 100 --spacey 15 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid2 --sidex 150 --sidey 150 --spacex 50 --spacey 50 --rad 10 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid2 --sidex 400 --sidey 50 --spacex 50 --spacey 50 --rad 10 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid2 --sidex 200 --sidey 100 --spacex 50 --spacey 50 --rad 10 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 370 --init grid2 --sidex 2000 --sidey 1000 --spacex 50 --spacey 50 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 370 --init grid2 --sidex 2000 --sidey 1000 --spacex 25 --spacey 25 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 370 --init grid2 --sidex 2000 --sidey 1000 --spacex 200 --spacey 25 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid2 --sidex 2000 --sidey 1000 --spacex 400 --spacey 50 --rad 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid --side 10 --space 50 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 99999 --init grid --side 5 --space 200 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 99999 --init normal --idensity 0.0287115 --irad 150 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid --side 20 --space 20 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init grid --side 20 --space 6 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 22 --init uniform --idensity 0.0287115 --irad 400 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --effort 1 --init normal --idensity 0.0287115 --irad 100 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --effort 1 --rad 0.682689492 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --effort 0.5 --init normal --idensity 0.5 --irad 50 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --effort 0.5 --init normal --idensity 0.0287115 --irad 50 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 2 --effort 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 1 --effort 0.682689492 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --idensity 0.0287115 --irad 20 --rad 1 --backtrack 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --idensity 0.5 --irad 12 --rad 12 --backtrack 22 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --idensity 0.0287115 --irad 150 --rad 1.414213562 --backtrack 22 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init grid --side 20 --space 20 --rad 2 --backtrack 22 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --idensity 0.0287115 --irad 150 --rad 0.682689492 --backtrack 370 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --idensity 0.0287115 --irad 10 --rad 0.682689492 --backtrack 370 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --idensity 0.682689492 --irad 10 --rad 0.682689492 --backtrack 370 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --idensity 0.5 --irad 20 --rad 0.5 --backtrack 370 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --idensity 0.0287115 --irad 20 --rad 0.5 --backtrack 370 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 1000 --rad 0.5 --backtrack 22 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 100 --rad 0.5 --backtrack 370 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 100 --rad 0.5 --backtrack 22 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 2 --rad 1 --backtrack 22 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 100 --rad 1 --backtrack 22 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 100 --rad 1 --backtrack 22 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 2 --rad 0.682689492 --backtrack 22 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 50 --rad 0.5 --backtrack 22 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 100 --rad 0.682689492 --backtrack 22 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 100 --backtrack 22 --rad 0.682689492 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --irad 100 --idensity 0.0287115 --backtrack 22 --rad 0.682689492 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --irad 150 --idensity 0.0287115 --backtrack 22 --rad 0.682689492 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --irad 100 --ipop 1000 --backtrack 370 --rad 0.682689492 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --irad 200 --ipop 4000 --backtrack 370 --rad 0.682689492 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --irad 100 --ipop 1000 --backtrack 370 --rad 0.682689492 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --irad 100 --ipop 1000 --backtrack 370 --rad 1 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --irad 10 --ipop 100 --backtrack 22 --rad 0.5 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init normal --irad 100 --ipop 1000 --nath 1000 --space 50 --side 5 --rad 5 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 0.682689492 --backtrack 370 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --space 25 --side 14 --rad 0.5 --backtrack 22 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 100 --ipop 100 --rad 0.5 --backtrack 22 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --irad 100 --ipop 100 --rad 0.5 --backtrack 370 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 0.682689492 --backtrack 370 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 0.5 --backtrack 370 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 1.414213562 --backtrack 22 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 0.682689492 --backtrack 1000 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 0.5 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --kmean 15 --rad 0.5 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --kmean 15 --rad 1 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 1.414 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 1 --backtrack 10000 --rad 2 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 0.954499736 --backtrack 10000 --rad 2 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 0.682689492 --backtrack 10000 --rad 2 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 0.8 --backtrack 10000 --rad 1 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 0.98 --backtrack 10000 --rad 5 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 0.9973 --backtrack 10000 --rad 2.718 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --tol 0.682689492 --backtrack 10000 --rad 2 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 1000 --rad 10 --advance 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 20 --advance 3 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rad 50 --advance 0 |& tee results/log.$current_time
 done

@@ -16,5 +16,6 @@ RUN pip install jupyterlab
 RUN apt-get update && apt-get install -y expect
 RUN pip3 install matplotlib
 RUN pip3 install scipy
+RUN pip3 install treelib
 
 RUN ldconfig
