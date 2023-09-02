@@ -12,19 +12,10 @@ from treelib import Node, Tree
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--backtrack', help='backtrack threshold', default=1, type=float)
-parser.add_argument('--sample', help='sampling parameter', default=1, type=float)
-parser.add_argument('--rr', help='root rate', default=100, type=int)
-parser.add_argument('--rootlife', help='lifespan of root', default=1, type=int)
-parser.add_argument('--alt4', default=False, action='store_true')
-parser.add_argument('--alt3', default=False, action='store_true')
-parser.add_argument('--alt2', default=False, action='store_true')
-parser.add_argument('--alt', default=False, action='store_true')
-parser.add_argument('--btboost', help='backtrack increase every lmax', default=1, type=float)
 parser.add_argument('--binary', default=False, action='store_true')
 parser.add_argument('--minleaves', help='minimum pool size, else root', default=22, type=int)
 parser.add_argument('--keepout', help='grid3 origin keepout square', default=100, type=int)
-parser.add_argument('--orad', help='grid3 origin radius', default=0, type=float)
+parser.add_argument('--orad', help='grid3 origin radius', default=None, type=float)
 parser.add_argument('--minpool', help='minimum pool size, else root', default=1, type=int)
 parser.add_argument('--growth', help='increase r when backtrack', default=1, type=float)
 parser.add_argument('--lmax', help='force initial lmax when loading init rle', default=0, type=int)
@@ -46,6 +37,7 @@ parser.add_argument('--sidey', help='grid size = side*2+1', default=2, type=int)
 parser.add_argument('--ipop', help='initial population', default=10, type=int)
 parser.add_argument('--irad', help='initial radius', default=10, type=float)
 parser.add_argument('--idensity', help='initial density', default=None, type=float)
+parser.add_argument('--backtrack', help='backtrack threshold', default=10000, type=int)
 parser.add_argument('--tol', help='lmax tolerance', default=1, type=float)
 parser.add_argument('--rad', help='radius', default=0.5, type=float)
 parser.add_argument('--advance', help='# gen to advance on ATH', default=1, type=int)
@@ -85,9 +77,7 @@ def log(hdr,n,k,l,ath,pop,m,r,nath):
 #        h = [tree[i].data[1] for i in list(tree.expand_tree(mode=Tree.WIDTH))[-5:]]
 #    else:
 #        h=''
-    larr=np.array([int(i.tag) for i in tree.all_nodes()])
-    print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} node {:6d} back {:6d} leaves {:4d} depth {:4d} init {:4d} lmean {:12.8f} lmax {:12.8f} level {:4d} bt {:4.0f} lstd {:4.0f}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,len(tree.all_nodes()),nback,len(tree.leaves()),tree.depth(),len(init),np.mean(larr),np.amax(larr),tree.depth(node),bt,np.std(larr)))
-    #print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} nroot {:6d} node {:6d} back {:6d} leaves {:4d} depth {:4d} irad {:12.4f} init {:4d} lmean {:12.8f} pmean {:12.8f}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,nroot,len(tree.all_nodes()),nback,len(tree.leaves()),tree.depth(),args.irad,len(init),np.mean(lmean),np.mean(pmean)))
+    print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} nath {:6d} node {:6d} back {:6d} orad {:8.4f} leaves {:4d} depth {:4d} backtrack {:3d} init {:4d} pool {:6d}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,nath,len(tree.all_nodes()),nback,args.orad,len(tree.leaves()),tree.depth(),args.backtrack,len(init),len(pool)))
     #print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} nath {:6d} node {:6d} back {:6d} density {:8.4f} leaves {:4d} depth {:4d} backtrack {:3d} init {:4d} pool {:6d}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,nath,len(tree.all_nodes()),nback,pop/(args.sidex*args.sidey),len(tree.leaves()),tree.depth(),args.backtrack,len(init),len(pool)))
     #print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} nath {:6d} node {:6d} back {:6d} density {:8.4f} leaves {:4d} depth {:4d} backtrack {:3d} init {:4d} lavg {:12.4f} lstd {:12.4f}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,nath,len(tree.all_nodes()),nback,pop/(args.sidex*args.sidey),len(tree.leaves()),tree.depth(),args.backtrack,len(init),lavg,lstd))
 #    print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} nath {:6d} node {:6d} back {:6d} density {:8.4f} leaves {:4d} depth {:4d} backtrack {:3d} init {:4d} topk {:4d} {:8.4f} min {} max {}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,nath,len(tree.all_nodes()),nback,pop/(args.sidex*args.sidey),len(tree.leaves()),tree.depth(),args.backtrack,len(init),topk,args.topk,min(h),max(h)))
@@ -126,80 +116,71 @@ pat = lt.pattern()
 if args.init is not None and args.init[-4:] == ".rle":
     pat = lt.load(args.init) # empty pattern if None, else load .rle file
     pat = pat.centre()
-    init0 = pat.coords()
+    init = pat.coords()
 else:
     pat = lt.pattern()
     # initial conditions
     if args.init=="normal":
         if args.idensity is None:
-            init0 = np.random.normal(0,args.irad,size=[args.ipop,2])
+            init = np.random.normal(0,args.irad,size=[args.ipop,2])
         else:
-            init0 = np.random.normal(0,args.irad,size=[int((args.idensity*np.pi*args.irad*args.irad)),2])
+            init = np.random.normal(0,args.irad,size=[int((args.idensity*np.pi*args.irad*args.irad)/args.rad),2])
     elif args.init=="uniform":
-        init0 = np.random.uniform(low=-args.irad, high=args.irad,size=[int(args.idensity*args.irad*2*args.irad*2),2])
+        init = np.random.uniform(low=-args.irad, high=args.irad,size=[int(args.idensity*args.irad*2*args.irad*2),2])
     elif args.init=="grid":
-        init0 = np.array([(x,y) for x in range(-args.side*args.space,args.side*args.space+args.space,args.space) for y in range(-args.side*args.space,args.side*args.space+args.space,args.space)])
+        init = np.array([(x,y) for x in range(-args.side*args.space,args.side*args.space+args.space,args.space) for y in range(-args.side*args.space,args.side*args.space+args.space,args.space)])
     elif args.init=="grid2":
-        init0 = np.array([(x,y) for x in range(-args.sidex//2,args.sidex//2,args.spacex) for y in range(-args.sidey//2,args.sidey//2,args.spacey)])
+        init = np.array([(x,y) for x in range(-args.sidex//2,args.sidex//2,args.spacex) for y in range(-args.sidey//2,args.sidey//2,args.spacey)])
     elif args.init=="grid3":
 #        init0 = [(x,y) for x in range(-args.sidex//2,args.sidex//2,args.spacex) for y in range(-args.sidey//2,args.sidey//2,args.spacey)]
-        init0 = []
+        init = []
         for x in range(-args.sidex//2,args.sidex//2,args.spacex):
             for y in range(-args.sidey//2,args.sidey//2,args.spacey):
                 if x<-args.keepout or x>=args.keepout or y<-args.keepout or y>=args.keepout:
-                    init0.append((x,y))
+                    init.append((x,y))
 #        for (x,y) in init0:
 #            if abs(x)>args.keepout or abs(y)>args.keepout:
 #                init.append((x,y))
 #        if args.orad is not None:
 #            init.append((-args.spacex//2,-args.spacey//2))
-        init0 = np.array(init)
+        init = np.array(init)
     else:
-        init0=np.array([[0,0]])
+        init=np.array([[0,0]])
     #pat[init] |=1
     #fn = '{}/init_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,pat.population,0,args.seed,0)
     #bb = pat.bounding_box
     #pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
 
-init0 = init0.astype(float)
-init = np.copy(init0)
-#lmax=args.lmax
-lmax=0
+init0 = np.array(init, dtype=float)
+init = init0
+lmax=args.lmax
 ath=0
 n=0
 k=0
 nath=0
-maxpop=0
 #width=None
 #history=[]
-#pool=[]
+pool=[]
 tree=Tree()
 root=tree.create_node()
-root.tag = args.rootlife
-#root.data=(init0,0,args.rad,init0)
-root.data=(init0,0,args.backtrack,np.copy(init0),0,0)
+root.tag = 0
+root.data=(init0,0,args.rad,init0)
 node=root
 topk=0
 nback=0
-#lmean=[]
-#pmean=[]
 #digest={}
 #lavg=0
 #lstd=0
 #r = args.rad
-#r = args.rad
-bt = args.backtrack
-#credits=0
-nroot=0
 while True:
     n+=1
     nath+=1
     k+=1
-    #r = node.data[2]
+    r = node.data[2]
 
-    #if args.showtree and ((n%1000)==0):
-    #    tree.show(idhidden=True)
-    #    #tree.show(idhidden=False)
+    if args.showtree and ((n%1000)==0):
+        tree.show(idhidden=True)
+        #tree.show(idhidden=False)
 
 #    d = pat.digest()
 #    if d not in digest:
@@ -215,19 +196,11 @@ while True:
 #    if lmax>0:
 #        args.backtrack = np.sqrt(lmax)*args.effort
 
-    #if k>args.backtrack and len(tree.all_nodes())>1:
+    if k>args.backtrack and len(tree.all_nodes())>1:
     #if (n%args.backtrack)==0 and len(tree.all_nodes())>1:
         #lmax=0
-    #bt = args.backtrack+np.ceil(random.expovariate(1))
-    if k>bt:
-        #k=0
+        k=0
         nback +=1
-        if pat.population > maxpop:
-            log('MAXPOP',n,k,l,ath,pat.population,m,r,nath)
-            bb = pat.bounding_box
-            pat.write_rle('{}/maxpop_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
-            maxpop = pat.population
-        #bt = args.backtrack
 #        args.side +=1
 #        init = np.array([(x,y) for x in range(-args.side*args.space,args.side*args.space+args.space,args.space) for y in range(-args.side*args.space,args.side*args.space+args.space,args.space)])
 
@@ -307,89 +280,38 @@ while True:
         #if args.keep:
         #    node.data=(pat.coords(),lmax,r,init) # keep harmless mutations
 
-        #pool = tree.all_nodes()
+        pool = tree.all_nodes()
         #topk = min(lmax,np.std(np.array([int(i.tag) for i in pool]))*args.topk)
         #topk = np.std(np.array([int(i.tag) for i in pool]))*args.topk
         #pool = [i for i in pool if int(i.tag)>=topk]
-#        pool = [i for i in pool if int(i.tag)>0]
-#        larr = np.array([int(i.tag) for i in pool])
-#        parr = np.array([len(i.data[0]) for i in pool])+1
+        pool = [i for i in pool if int(i.tag)>0]
+        larr = np.array([int(i.tag) for i in pool])
 
         #larr = np.array([int(i.tag) if int(i.tag)>topk for i in pool])
         #pool = sorted(pool, reverse=True, key=lambda node:int(node.tag))
         #topk = int(len(pool)*args.topk)
         #topk = int(np.std(larr)*args.topk)
         #larr = larr[0:topk]
-#        if args.alt4:
-#            larr = larr/np.log(parr)
-#        if args.alt3:
-#            larr = np.abs(np.multiply(larr/parr,np.log(larr/parr)))
-#        if args.alt2:
-#            larr = np.square(larr/parr)
-#        if args.alt:
-#            larr = larr/parr
-#        if args.square:
-#            larr = np.square(larr)
-#        if args.log:
-#            larr = np.multiply(larr,np.log(larr))
+        if args.square:
+            larr = np.square(larr)
+        if args.log:
+            larr = np.multiply(larr,np.log(larr))
         #lavg = np.sqrt(np.mean(larr))
         #lstd = np.sqrt(np.std(larr))
         #prob = larr / sum(larr)
-#        prob = larr / np.linalg.norm(larr, ord=1)
+        prob = larr / np.linalg.norm(larr, ord=1)
         #prob = np.linalg.norm(larr,ord=2,keepdims=True)
         #if len(pool)==0 or args.boom:
         #if len(tree.all_nodes())<args.minpool:
-        #if len(tree.all_nodes()) < nback:
-        #if (nback%args.rr)==0:
-        #if len(tree.leaves()) < args.minleaves:
-#        if credits==0:
-#            if args.init=="normal":
-#                init0 = np.random.normal(0,args.irad,size=[args.ipop,2])
-#                root.data=(init0,0,args.backtrack,np.copy(init0))
-#            node=root
-#            credits=args.rr
-#            nroot+=1
-#        else:
-#            #node = np.random.choice(pool,p=prob)
-#            node = np.random.choice(pool)
-#            credits -= 1
+        if len(tree.leaves()) < args.minleaves:
+            node=root
+        else:
+            node = np.random.choice(pool,p=prob)
 
-        while True:
-            pool = tree.all_nodes()
-            #larr = np.array([i.data[5] for i in pool]) # level
-            #larr = np.array([tree.depth(i) for i in pool])
-            larr = np.array([int(i.tag) for i in pool]) # lifespan distribution
-            #node = pool[np.argmax(larr)]
-            lmean = np.mean(larr)
-            lstd = np.std(larr)
-
-            try:
-                if args.alt:
-                    larr = np.square(larr)
-                if args.alt2:
-                    larr = np.multiply(larr, np.log(larr))
-                prob = larr / np.sum(larr)
-                node = np.random.choice(pool, p=prob)
-            except:
-                node = np.random.choice(pool)
-
-            (xy,lmax,bt,init,nvisit,level) = node.data
-            #bt = int(np.random.exponential(scale=np.log(lmax)))
-            #if nvisit>args.maxvisit and node.is_leaf() and node!=root:
-            #if nvisit>np.random.exponential(scale=args.sample) and node.is_leaf() and node!=root:
-            #if node.is_leaf() and node!=root and nvisit>np.random.exponential(scale=np.log(lmax)) :
-            #if node.is_leaf() and node!=root and nvisit>args.sample:
-            #if node.is_leaf() and node!=root and (lmax<lmean or nvisit>np.log(lmax)):
-            if node.is_leaf() and node!=root and lmax<lmean+lstd:
-                tree.remove_node(node.identifier)
-            else:
-                node.data = (xy,lmax,bt,init,nvisit+1,level)
-                break
-        #init = np.copy(init0)
+        (xy,lmax,r,init) = node.data
         pat = lt.pattern()
         pat[xy] |=1
-        log('BACK',n,k,lmax,ath,pat.population,len(xy),r,nath)
-        k=0
+        log('BACKTRACK',n,k,lmax,ath,pat.population,len(xy),r,nath)
         if args.debug:
             tree.show()
         
@@ -407,38 +329,22 @@ while True:
         #(x,y) = random.choice(init)
         #xy = np.array([[np.around(np.random.normal(x,r)),np.around(np.random.normal(y,r))] for i in range(m)])
 
-#        xy=[]
-#        #for i in range(int(np.ceil(random.expovariate(1)))):
-#        #if args.binary:
-#        #    for (x,y) in init:
-#        #        xy.extend([[np.around(np.random.normal(x,r)),np.around(np.random.normal(y,r))] for i in range(int(np.ceil(random.expovariate(1))))])
-#        #else:
-#        i = random.choice(range(len(init)))
-#        init[i] += np.random.normal(0,args.orad,size=2)
-#        (x,y) = init[i]
-#        xy.extend([[np.around(np.random.normal(x,r)),np.around(np.random.normal(y,r))] for i in range(int(np.ceil(random.expovariate(1))))])
-#
-#        #if args.orad is not None:
-#        #    xy.extend([[np.around(np.random.normal(-args.spacex//2,args.orad)),np.around(np.random.normal(-args.spacey//2,args.orad))] for i in range(int(np.ceil(random.expovariate(1))))])
-#
-#        xy = np.array(xy)
-#        m = len(xy)
-
-        #m = np.ceil(random.expovariate(1))
-        #r = np.log(lmax+1)+args.rad
-        #if lmax==0:
-        #    r = args.rad
+        xy=[]
+        #for i in range(int(np.ceil(random.expovariate(1)))):
+        #if args.binary:
+        #    for (x,y) in init:
+        #        xy.extend([[np.around(np.random.normal(x,r)),np.around(np.random.normal(y,r))] for i in range(int(np.ceil(random.expovariate(1))))])
         #else:
-        #    r = np.log(np.log(lmax))/np.sqrt(2)
-        r = args.rad
         i = random.choice(range(len(init)))
-        init[i] += np.random.normal(0,r,size=2) # jiggle
-        xy = np.around(init[i]).reshape([1,2])
-        #xy = np.around(init[i] + np.random.normal(0,r,size=2)).reshape([1,2])
-        #print('xy',xy,pat[xy])
+        init[i] += np.random.normal(0,args.orad,size=2)
+        (x,y) = init[i]
+        xy.extend([[np.around(np.random.normal(x,r)),np.around(np.random.normal(y,r))] for i in range(int(np.ceil(random.expovariate(1))))])
 
-        m = 1
+        #if args.orad is not None:
+        #    xy.extend([[np.around(np.random.normal(-args.spacex//2,args.orad)),np.around(np.random.normal(-args.spacey//2,args.orad))] for i in range(int(np.ceil(random.expovariate(1))))])
 
+        xy = np.array(xy)
+        m = len(xy)
 
     # NEW
 #    m1 = np.ceil(random.expovariate(1))
@@ -454,54 +360,34 @@ while True:
     l = lifespan(pat,100,lmax*args.tol)
 
     if l==-1:
-        log('RUNAWAY',n,k,l,ath,pat.population,m,r,nath)
+        log('RUNAWAY',n,k,l,ath,pat.population,len(xy),r,nath)
         bb = pat.bounding_box
         pat.write_rle('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
         pat[xy] = v0 # revert mutation xy
         bb = pat.bounding_box
         pat.write_rle('{}/snapshot_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
     elif l==-2:
-        log('GROWTH',n,k,l,ath,pat.population,m,r,nath)
+        log('GROWTH',n,k,l,ath,pat.population,len(xy),r,nath)
         bb = pat.bounding_box
         pat.write_rle('{}/growth_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
         pat[xy] = v0 # revert mutation xy
         bb = pat.bounding_box
         pat.write_rle('{}/snapshot_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
-        # add snapshots to tree
-        #bt=np.log(l)
-#        d = pat.digest()
-#        if d not in [v.identifier for v in tree.all_nodes()]: # no dups
-#            #node = tree.create_node(tag=l, identifier=d, parent=node, data=[pat.coords(),l,r*args.growth,init])
-#            #node = tree.create_node(tag=l, identifier=d, parent=node, data=[pat.coords(),l,r*args.growth,init0])
-#            node = tree.create_node(tag=l, identifier=d, parent=node, data=[pat.coords(),l,bt,np.copy(init)])
-#            lmean.append(l)
-#            pmean.append(pat.population)
     elif l==lmax:
-        log('BEST',n,k,l,ath,pat.population,m,r,nath)
+        log('BEST',n,k,l,ath,pat.population,len(xy),r,nath)
         k=0
     elif l>lmax*args.tol:
         # add new lmax to tree
-        #bt=np.log(l)
         d = pat.digest()
-        #print('DIGEST',d,pat.population,pat.coords())
         if d not in [v.identifier for v in tree.all_nodes()]: # no dups
-            #node = tree.create_node(tag=l, identifier=d, parent=node, data=[pat.coords(),l,r*args.growth,init])
-            #node = tree.create_node(tag=l, identifier=d, parent=node, data=[pat.coords(),l,r*args.growth,init0])
-            #node.data = (xy,lmax,bt,init,nvisit+1,level)
-            #bt = int(np.ceil(np.sqrt(tree.depth(node)+1)))
-            #bt = int(np.ceil(np.log(l)))
-            #bt = int(np.random.exponential(scale=np.log(l)))
-            node = tree.create_node(tag=l, identifier=d, parent=node, data=[pat.coords(),l,args.backtrack,np.copy(init),0,tree.depth(node)])
-            #print('level',tree.level(node.identifier))
-            #lmean.append(l)
-            #pmean.append(pat.population)
+            node = tree.create_node(tag=l, identifier=d, parent=node, data=[pat.coords(),l,r*args.growth,init])
 
         if l>ath:
             ath = l
             fn = '{}/ath_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,pat.population,int(l),args.seed,n)
             bb = pat.bounding_box
             pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
-            log('ATH',n,k,l,ath,pat.population,m,r,nath)
+            log('ATH',n,k,l,ath,pat.population,len(xy),r,nath)
             tree.show(idhidden=True)
             nath=0
             #init = pat.coords()
@@ -509,12 +395,9 @@ while True:
             #fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,pat.population,int(l),args.seed,n)
             #bb = pat.bounding_box
             #pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
-            log('LMAX',n,k,l,ath,pat.population,m,r,nath)
+            log('LMAX',n,k,l,ath,pat.population,len(xy),r,nath)
         k=0
         lmax=l
-        #credits += args.rr
-        #bt+=args.btboost
-        #bt+=np.log(lmax)
         #d = pat.digest()
         #if not any(h[2] == d for h in history):
 

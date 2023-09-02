@@ -48,14 +48,12 @@ np.random.seed(args.seed)
 print(args)
 
 def radius(pop):
-    return max(1.414,args.gamma*np.sqrt(pop))
-    #return max(1.414,args.gamma*np.log(pop+1))
-    #return max(1.414,args.gamma*np.log(pop+1)*np.log(pop+1))
+    return max(args.minrad,np.sqrt(pop/args.gamma))
     #return max(args.minrad,np.sqrt(pop/np.pi))
     #return max(args.minrad,np.sqrt(pop))
 
-def log(hdr,n,l,lmax,m,pop,r,k,backtrack,gen):
-    print('{:10} wall {} n {:6d} LIFE {:6d} lmax {:6d} pop {:6d} m {:6d} r {:12.8f} k {:6d} backtrack {:6.0f} gen {:6.0f}'.format(hdr,datetime.datetime.now(),n,l,lmax,pop,m,r,k,backtrack,gen))
+def log(hdr,n,l,lmax,m,pop,r,k,backtrack):
+    print('{:10} wall {} n {:6d} LIFE {:6d} lmax {:6d} pop {:6d} m {:6d} r {:12.8f} k {:6d} backtrack {:6d}'.format(hdr,datetime.datetime.now(),n,l,lmax,pop,m,r,k,int(backtrack)))
 
 # run soup until population is stable, starting at generation lmax
 def lifespan(pat,period,lmax):
@@ -155,7 +153,7 @@ def batch(pat,period,lmax,b,r):
         if args.debug:
             print('k',k,'xy',len(xy),'life',ent[-1])
         if ent[-1]<0:
-            log('RUNAWAY',n,l,lmax,len(xy),pat.population,r,k,backtrack,len(best))
+            log('RUNAWAY',n,l,lmax,len(xy),pat.population,r,k,len(best))
             bb = pat.bounding_box
             pat.write_rle('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
 
@@ -178,7 +176,6 @@ else:
 
 n=0 # total count
 k=0 # backtrack count
-backtrack=0 # backtrack threshold
 best=[]
 #side = args.side
 #space = args.space
@@ -188,22 +185,10 @@ best=[]
 #grid=[(random.normalvariate(0,args.srad),random.normalvariate(0,args.srad)) for i in range(args.spop)]
 #grid=[(0,0)]
 #ipat = np.random.normal(0,np.sqrt(args.ipop/np.pi),size=[args.ipop,2])
+ipat = np.random.normal(0,radius(args.ipop),size=[args.ipop,2])
 #ipat = np.random.normal(0,args.radius,size=[args.ipop,2])
-#ipat = np.random.normal(0,radius(args.ipop),size=[args.ipop,2])
-ipat = np.random.normal(radius(args.ipop),radius(args.ipop),size=[args.ipop,2])
 print('ipat.shape',ipat.shape)
 pat[ipat] ^= 1
-ipat = np.random.normal(-radius(args.ipop),radius(args.ipop),size=[args.ipop,2])
-print('ipat.shape',ipat.shape)
-pat[ipat] ^= 1
-
-#pat[0,0]=1
-
-
-### # sparse uniform background
-### ibackground = np.random.uniform(-3*radius(args.ipop),3*radius(args.ipop),size=[args.ipop,2])
-### pat[ibackground] ^= 1
-
 #pat[0,0]=1
 print('pat.population',pat.population)
 #print('pat.coords',pat.coords())
@@ -233,13 +218,8 @@ ath=lmax
 #grid = [(random.normalvariate(0,args.srad),random.normalvariate(0,args.srad)) for i in range(args.spop)]
 #side = len(grid)
 #ea=[]
-#backtrack = args.backtrack
+backtrack = args.backtrack
 while True:
-    #backtrack = args.backtrack
-    #backtrack = np.log(n+1)
-    #backtrack = np.log(len(best)+1)
-    #backtrack = np.sqrt(len(best))
-    #backtrack = len(best)
 #    if lmax<5000:
 #        side=0
 #    elif lmax<15000:
@@ -266,18 +246,17 @@ while True:
             #pat[x,y] ^= 1
         #lmax += args.period
         lmax = l
-        backtrack = lmax/args.batch
         #l = lifespan(pat,0)
         best.append([pat.coords(),l])
         bb = pat.bounding_box
         if l>ath:
             ath=l
-            log('BEST',n,l,lmax,len(xy),pat.population,r,k,backtrack,len(best))
-            log('ATH',n,l,lmax,len(xy),pat.population,r,k,backtrack,len(best))
+            log('BEST',n,l,lmax,len(xy),pat.population,r,k,len(best))
+            log('ATH',n,l,lmax,len(xy),pat.population,r,k,len(best))
             pat.write_rle('{}/ath_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
             wd=n
         else:
-            log('BEST',n,l,lmax,len(xy),pat.population,r,k,backtrack,len(best))
+            log('BEST',n,l,lmax,len(xy),pat.population,r,k,len(best))
             if not args.ath:
                 pat.write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
         k=0
@@ -302,7 +281,7 @@ while True:
         for j in range(b):
             best.pop()
         if len(best)==0:
-            log('EMPTY',n,l,lmax,0,pat.population,r,k,backtrack,len(best))
+            log('EMPTY',n,l,lmax,0,pat.population,r,k,len(best))
             break
         #(xy,l) = best.pop()
         #best.pop()
@@ -318,10 +297,10 @@ while True:
 #        if backtrack<1:
 #            log('TERMINATE',n,l,lmax,len(xy),pat.population,r,k,backtrack)
 #            break
-        log('BACKTRACK',n,l,lmax,0,pat.population,r,k,backtrack,len(best))
+        log('BACKTRACK',n,l,lmax,0,pat.population,r,k,len(best))
         k=0
         if n>args.watchdog*wd:
-            log('WATCHDOG',n,l,lmax,0,pat.population,r,k,backtrack,len(best))
+            log('WATCHDOG',n,l,lmax,0,pat.population,r,k,len(best))
             break
             
         #break

@@ -8,25 +8,19 @@ import scipy.stats
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--ath', help='only save all time high patterns', default=False, action='store_true')
-parser.add_argument('--watchdog', help='timeout parameter', default=2.0, type=float)
-parser.add_argument('--minrad', help='minimum radius', default=1.0, type=float)
-parser.add_argument('--gamma', help='radius coefficient', default=3.14, type=float)
-#parser.add_argument('--expo', help='exponential distribution parameter', default=0, type=float)
-parser.add_argument('--ipop', help='initial population', default=0, type=int)
-#parser.add_argument('--srad', help='std dev for new grid entries', default=100, type=float)
-#parser.add_argument('--spop', help='initial grid entries', default=10, type=int)
+parser.add_argument('--srad', help='std dev for new grid entries', default=100, type=float)
+parser.add_argument('--spop', help='initial grid entries', default=10, type=int)
 #parser.add_argument('--patience', help='number of batches before backtracking', default=100, type=int)
-parser.add_argument('--backtrack', help='number of batches before backtracking', default=0, type=int)
+parser.add_argument('--backtrack', help='number of batches before backtracking', default=100, type=int)
 parser.add_argument('--pattern', help='initial pattern', default=None, type=str)
 parser.add_argument('--seed', help='random seed', default=None, type=int)
 parser.add_argument('--memory', help='garbage collection limit in MB', default=60000, type=int)
 parser.add_argument('--results', help='results directory', default='./results')
 #parser.add_argument('--space', help='grid spacing', default=25, type=int)
 #parser.add_argument('--side', help='grid size = side*2+1', default=2, type=int)
-#parser.add_argument('--radius', help='initial radius', default=1.0, type=float)
+parser.add_argument('--radius', help='initial radius', default=1.0, type=float)
 parser.add_argument('--period', help='population trace length', default=100, type=int)
-parser.add_argument('--batch', help='number of mutations / batch', default=100, type=int)
+parser.add_argument('--batch', help='number of mutations / batch', default=1000, type=int)
 #parser.add_argument('--terminate', default=False, action='store_true')
 #parser.add_argument('--bump', default=False, action='store_true')
 
@@ -37,25 +31,15 @@ parser.add_argument('--batch', help='number of mutations / batch', default=100, 
 #parser.add_argument('--sigma', help='sample area for density calculation', default=3, type=float)
 #parser.add_argument('--summary',help='only save final pattern',default=False, action='store_true')
 parser.add_argument('--verbose', default=False, action='store_true')
-parser.add_argument('--debug', default=False, action='store_true')
 args = parser.parse_args()
 if args.seed is None:
     args.seed = random.randint(1,1000000)
 random.seed(args.seed)
 np.random.seed(args.seed)
-#args.ipop = int(args.radius*args.radius)
-#args.batch = int(args.radius)
 print(args)
 
-def radius(pop):
-    return max(1.414,args.gamma*np.sqrt(pop))
-    #return max(1.414,args.gamma*np.log(pop+1))
-    #return max(1.414,args.gamma*np.log(pop+1)*np.log(pop+1))
-    #return max(args.minrad,np.sqrt(pop/np.pi))
-    #return max(args.minrad,np.sqrt(pop))
-
-def log(hdr,n,l,lmax,m,pop,r,k,backtrack,gen):
-    print('{:10} wall {} n {:6d} LIFE {:6d} lmax {:6d} pop {:6d} m {:6d} r {:12.8f} k {:6d} backtrack {:6.0f} gen {:6.0f}'.format(hdr,datetime.datetime.now(),n,l,lmax,pop,m,r,k,backtrack,gen))
+def log(hdr,n,l,lmax,m,pop,r,k,backtrack):
+    print('{:10} wall {} n {:6d} LIFE {:6d} lmax {:6d} pop {:6d} m {:6d} r {:12.8f} k {:6d} backtrack {:6d}'.format(hdr,datetime.datetime.now(),n,l,lmax,pop,m,r,k,int(backtrack)))
 
 # run soup until population is stable, starting at generation lmax
 def lifespan(pat,period,lmax):
@@ -85,7 +69,7 @@ def entropy(pat,period,gen):
     return scipy.stats.entropy(counts) # entropy of population distribution 
 
 # compute entropy for a batch of n mutations
-def batch(pat,period,lmax,b,r):
+def batch(pat,period,gen,b,grid,r):
     mut=[]
     ent=[]
     for k in range(b):
@@ -98,24 +82,7 @@ def batch(pat,period,lmax,b,r):
         #q=1
         #q = len(grid)
 
-        xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(1/r))),2])
-        #xy = [(int(x0+random.normalvariate(0,r)),int(y0+random.normalvariate(0,r))) for i in range(int(np.floor(random.expovariate(1)))) for (x0,y0) in grid]
-        #xy = np.random.normal(0,r,size=[int(np.floor(1+random.expovariate(1))),2])
-        #xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(1/np.sqrt(lmax)))),2])
-        #xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(1))),2])
-        #xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(0.5))),2])
-        #xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(args.expo))),2])
-        #xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(1/pat.population))),2])
-        #xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(1/(10*r)))),2])
-        #xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(pat.population/(np.pi*r*r)))),2])
-        #if pat.population < np.pi*r*r:
-        #    xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(args.expo+pat.population/(np.pi*r*r)))),2])
-        #    print('expo',args.expo+pat.population/(np.pi*r*r),len(xy))
-        #else:
-        #    xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(1))),2])
-        #xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate((1/pat.population)*(1+len(best))))),2])
-        #xy = np.random.normal(0,r,size=[int(np.ceil(random.expovariate(args.expo*(1+len(best))))),2])
-        #print(k,'xy.shape',xy.shape)
+        xy = [(int(x0+random.normalvariate(0,r)),int(y0+random.normalvariate(0,r))) for i in range(int(np.floor(random.expovariate(1)))) for (x0,y0) in grid]
 
 #        xy=[]
 #        for j in range(len(grid)):
@@ -144,29 +111,20 @@ def batch(pat,period,lmax,b,r):
         mut.append(xy)
 
         # apply mutation xy
-        pat[xy] ^=1
-        #for (x,y) in xy:
-        #    pat[x,y] ^= 1
+        for (x,y) in xy:
+            pat[x,y] ^= 1
 
-        l = lifespan(pat,period,lmax)
-        ent.append(l)
-        if l>lmax:
-            lmax=l
-        if args.debug:
-            print('k',k,'xy',len(xy),'life',ent[-1])
+        ent.append(lifespan(pat,period,gen))
         if ent[-1]<0:
-            log('RUNAWAY',n,l,lmax,len(xy),pat.population,r,k,backtrack,len(best))
+            log('RUNAWAY',n,l,lmax,len(xy),pat.population,r,0,0)
             bb = pat.bounding_box
             pat.write_rle('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
 
         # revert
-        pat[xy] ^=1
-        #for (x,y) in xy:
-        #    pat[x,y] ^= 1
+        for (x,y) in xy:
+            pat[x,y] ^= 1
 
     i = np.argmax(ent)
-    if args.verbose:
-        print('np.mean(life)',np.mean(ent), 'np.std(life)',np.std(ent), 'i',i,'life',ent[i],'xy',len(mut[i]))
     return mut[i], ent[i]
 
 sess = lifelib.load_rules("b3s23")
@@ -178,42 +136,16 @@ else:
 
 n=0 # total count
 k=0 # backtrack count
-backtrack=0 # backtrack threshold
+lmax=0
 best=[]
 #side = args.side
 #space = args.space
 #grid=[(x,y) for x in range(-args.side*args.space,args.side*args.space+args.space,args.space) for y in range(-args.side*args.space,args.side*args.space+args.space,args.space)]
 
 # superpop grid
-#grid=[(random.normalvariate(0,args.srad),random.normalvariate(0,args.srad)) for i in range(args.spop)]
 #grid=[(0,0)]
-#ipat = np.random.normal(0,np.sqrt(args.ipop/np.pi),size=[args.ipop,2])
-#ipat = np.random.normal(0,args.radius,size=[args.ipop,2])
-#ipat = np.random.normal(0,radius(args.ipop),size=[args.ipop,2])
-ipat = np.random.normal(radius(args.ipop),radius(args.ipop),size=[args.ipop,2])
-print('ipat.shape',ipat.shape)
-pat[ipat] ^= 1
-ipat = np.random.normal(-radius(args.ipop),radius(args.ipop),size=[args.ipop,2])
-print('ipat.shape',ipat.shape)
-pat[ipat] ^= 1
-
-#pat[0,0]=1
-
-
-### # sparse uniform background
-### ibackground = np.random.uniform(-3*radius(args.ipop),3*radius(args.ipop),size=[args.ipop,2])
-### pat[ibackground] ^= 1
-
-#pat[0,0]=1
-print('pat.population',pat.population)
-#print('pat.coords',pat.coords())
-lmax = lifespan(pat,args.period,0)
-print('lmax',lmax)
-ath=lmax
-#for i in range(args.ipop):
-#    pat[int(random.normalvariate(0,args.radius)),int(random.normalvariate(0,args.radius))] ^= 1
-
 #grid.extend([(random.normalvariate(0,args.srad),random.normalvariate(0,args.srad)) for i in range(args.spop)])
+grid=[(random.normalvariate(0,args.srad),random.normalvariate(0,args.srad)) for i in range(args.spop)]
 
 #side = 4
 #space = 20
@@ -233,13 +165,8 @@ ath=lmax
 #grid = [(random.normalvariate(0,args.srad),random.normalvariate(0,args.srad)) for i in range(args.spop)]
 #side = len(grid)
 #ea=[]
-#backtrack = args.backtrack
+backtrack = args.backtrack
 while True:
-    #backtrack = args.backtrack
-    #backtrack = np.log(n+1)
-    #backtrack = np.log(len(best)+1)
-    #backtrack = np.sqrt(len(best))
-    #backtrack = len(best)
 #    if lmax<5000:
 #        side=0
 #    elif lmax<15000:
@@ -251,42 +178,23 @@ while True:
     #grid=[(x,y) for x in range(-side*space,side*space+space,space) for y in range(-side*space,side*space+space,space)]
     n += args.batch
     k += 1
-    #r = max(args.radius,np.sqrt(pat.population/len(grid))) # radius
-    #r = args.radius
-    #r = np.sqrt(pat.population)
-    #r = np.sqrt(pat.population/np.pi)
-    r = radius(pat.population)
-    xy,l = batch(pat,args.period,lmax,args.batch,r)
+    r = max(args.radius,np.sqrt(pat.population/len(grid))) # radius
+    xy,l = batch(pat,args.period,lmax,args.batch,grid,r)
     #ea.append(e)
     if l > lmax:
-        pat[xy] ^=1
-        #r = np.sqrt(pat.population/np.pi)
-        r = radius(pat.population)
-        #for (x,y) in xy:
-            #pat[x,y] ^= 1
+        for (x,y) in xy:
+            pat[x,y] ^= 1
         #lmax += args.period
         lmax = l
-        backtrack = lmax/args.batch
         #l = lifespan(pat,0)
-        best.append([pat.coords(),l])
+        log('BEST',n,l,lmax,len(xy),pat.population,r,k,backtrack)
         bb = pat.bounding_box
-        if l>ath:
-            ath=l
-            log('BEST',n,l,lmax,len(xy),pat.population,r,k,backtrack,len(best))
-            log('ATH',n,l,lmax,len(xy),pat.population,r,k,backtrack,len(best))
-            pat.write_rle('{}/ath_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
-            wd=n
-        else:
-            log('BEST',n,l,lmax,len(xy),pat.population,r,k,backtrack,len(best))
-            if not args.ath:
-                pat.write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+        pat.write_rle('{}/best_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
         k=0
+        best.append([pat.coords(),l])
     elif l == lmax:
-        pass
-        #pat[xy] ^=1
-
-        #for (x,y) in xy:
-            #pat[x,y] ^= 1
+        for (x,y) in xy:
+            pat[x,y] ^= 1
 
 #    if k > args.patience*len(grid):
 #        g = args.grid
@@ -296,34 +204,20 @@ while True:
 #        log('PATIENCE',n,l,lmax,len(xy),pat.population,r,k)
 
     if k > backtrack:
-        #b = min(len(best),int(np.ceil(random.expovariate(1/len(best)))))
-        #b = min(len(best),int(np.ceil(random.expovariate(2))))
-        b = min(len(best),1)
-        for j in range(b):
-            best.pop()
         if len(best)==0:
-            log('EMPTY',n,l,lmax,0,pat.population,r,k,backtrack,len(best))
+            print("BACKTRACK STACK EMPTY")
             break
-        #(xy,l) = best.pop()
-        #best.pop()
-        (xy,l) = best[-1]
+        (xy,l) = best.pop()
         lmax = l
         pat = lt.pattern()
-        pat[xy] ^=1
-        #r = np.sqrt(pat.population/np.pi)
-        r = radius(pat.population)
-        #for (x,y) in xy:
-            #pat[x,y]=1
+        for (x,y) in xy:
+            pat[x,y]=1
+        k=0
 #        backtrack = backtrack*0.5
 #        if backtrack<1:
 #            log('TERMINATE',n,l,lmax,len(xy),pat.population,r,k,backtrack)
 #            break
-        log('BACKTRACK',n,l,lmax,0,pat.population,r,k,backtrack,len(best))
-        k=0
-        if n>args.watchdog*wd:
-            log('WATCHDOG',n,l,lmax,0,pat.population,r,k,backtrack,len(best))
-            break
-            
+        log('BACKTRACK',n,l,lmax,len(xy),pat.population,r,k,backtrack)
         #break
 
 #        if n>lmax:

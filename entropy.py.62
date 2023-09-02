@@ -1,0 +1,197 @@
+import argparse
+import random
+import datetime
+import time
+import numpy as np ; print('numpy ' + np.__version__)
+import lifelib ; print('lifelib',lifelib.__version__)
+import scipy.stats
+import os
+import copy
+
+np.set_printoptions(linewidth=250)
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--effort', help='backtrack threshold 0..1', default=1, type=float)
+parser.add_argument('--nath', help='nath threshold for backtrack', default=10000, type=int)
+parser.add_argument('--space', help='grid spacing', default=25, type=int)
+parser.add_argument('--spacex', help='grid spacing', default=25, type=int)
+parser.add_argument('--spacey', help='grid spacing', default=25, type=int)
+parser.add_argument('--side', help='grid size = side*2+1', default=2, type=int)
+parser.add_argument('--sidex', help='grid size = side*2+1', default=2, type=int)
+parser.add_argument('--sidey', help='grid size = side*2+1', default=2, type=int)
+parser.add_argument('--ipop', help='initial population', default=10, type=int)
+parser.add_argument('--irad', help='initial radius', default=10, type=float)
+parser.add_argument('--idensity', help='initial density', default=None, type=float)
+parser.add_argument('--backtrack', help='backtrack threshold', default=10000, type=int)
+parser.add_argument('--tol', help='lmax tolerance', default=1, type=float)
+parser.add_argument('--rad', help='radius', default=0.5, type=float)
+parser.add_argument('--advance', help='# gen to advance on ATH', default=1, type=int)
+parser.add_argument('--init', help='initial pattern', default=None, type=str)
+parser.add_argument('--seed', help='random seed', default=None, type=int)
+parser.add_argument('--memory', help='garbage collection limit in MB', default=60000, type=int)
+parser.add_argument('--results', help='results directory', default='./results')
+parser.add_argument('--verbose', default=False, action='store_true')
+parser.add_argument('--debug', default=False, action='store_true')
+args = parser.parse_args()
+if args.seed is None:
+    args.seed = random.randint(1,1000000)
+random.seed(args.seed)
+np.random.seed(args.seed)
+print(args)
+
+def log(hdr,n,k,l,ath,pop,m,r,nath):
+#    d=0
+#    if len(digest)>0:
+#        d=max(digest.values())
+    print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} nath {:6d} history {:6d} {:6d} {:6d} backtrack {} init {}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,nath,len(history),0,0,args.backtrack,len(init)))
+
+# run soup until population is stable, starting at generation lmax
+def lifespan(pat,period,lmax):
+        pt = np.zeros(period)
+        o = int(max(0,lmax-period))
+        pat = pat.advance(o) # jump to lmax
+        p0 = pat.population
+        for j in range(1000000//period):
+            for k in range(period):
+                pt[k] = pat.population
+                pat = pat.advance(1)
+            if (pat.population>(2*p0)) and ((pat.population-p0)>10000): # HEURISTIC: 2x pop growth over lmax pop is suspicious
+                return -2 # linear growth
+            value,counts = np.unique(pt, return_counts=True) # histogram of population trace
+            e = scipy.stats.entropy(counts,base=None) # entropy of population distribution 
+            if e<0.682689492*np.log(period): # HEURISTIC: threshold
+                return max(0,o+j*period)
+        return -1 # runaway
+
+
+def ash(pat,lmax):
+    pat = pat.advance(lmax)
+    pat = pat.advance(100000) # allow gliders to escape
+    pat = pat[-10000:10000, -10000:10000]
+    pat = pat.centre()
+    return pat
+
+sess = lifelib.load_rules("b3s23")
+lt = sess.lifetree(memory=args.memory)
+pat = lt.pattern()
+
+if args.init is not None and args.init[-4:] == ".rle":
+    pat = lt.load(args.init) # empty pattern if None, else load .rle file
+    pat = pat.centre()
+else:
+    pat = lt.pattern()
+    # initial conditions
+    if args.init=="normal":
+        if args.idensity is None:
+            init = np.random.normal(0,args.irad,size=[args.ipop,2])
+        else:
+            init = np.random.normal(0,args.irad,size=[int((args.idensity*np.pi*args.irad*args.irad)/args.rad),2])
+    elif args.init=="uniform":
+        init = np.random.uniform(low=-args.irad, high=args.irad,size=[int(args.idensity*args.irad*2*args.irad*2),2])
+    elif args.init=="grid":
+        init = np.array([(x,y) for x in range(-args.side*args.space,args.side*args.space+args.space,args.space) for y in range(-args.side*args.space,args.side*args.space+args.space,args.space)])
+    elif args.init=="grid2":
+        init = np.array([(x,y) for x in range(-args.sidex//2,args.sidex//2,args.spacex) for y in range(-args.sidey//2,args.sidey//2,args.spacey)])
+    else:
+        init=np.array([[0,0]])
+    #pat[init] |=1
+    #fn = '{}/init_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,pat.population,0,args.seed,0)
+    #bb = pat.bounding_box
+    #pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+
+lmax=0
+ath=0
+n=0
+k=0
+nath=0
+history=[]
+#digest={}
+while True:
+    n+=1
+    nath+=1
+    k+=1
+
+#    d = pat.digest()
+#    if d not in digest:
+#        digest[d]=1
+#    else:
+#        digest[d]+=1
+
+    r = args.rad
+    # random xor mutation
+    coords = pat.coords()
+#    if len(coords)==0: # ensure at least 1 live cell
+#        coords = [[0,0]]
+
+#    if lmax>0:
+#        args.backtrack = np.sqrt(lmax)*args.effort
+
+    if k>args.backtrack:
+        #lmax=0
+        k=0
+#        args.side +=1
+#        init = np.array([(x,y) for x in range(-args.side*args.space,args.side*args.space+args.space,args.space) for y in range(-args.side*args.space,args.side*args.space+args.space,args.space)])
+
+        if len(history)<=1:
+            print("BACKTRACK STACK EMPTY")
+            break
+        pat = lt.pattern()
+        history.pop()
+        (xy,lmax) = history[-1]
+        pat[xy] |=1
+        log('BACKTRACK',n,k,lmax,ath,pat.population,len(xy),r,nath)
+        #continue
+    else:
+        m = int(np.ceil(random.expovariate(1)))
+        #m0 = int(np.ceil(random.expovariate(1)))
+        #loc = random.choices(coords,k=m)
+        #xy = np.array([[np.random.normal(x,r),np.random.normal(y,r)] for i in range(m0) for (x,y) in loc])
+        #xy = np.random.uniform(low=-args.side*args.space, high=args.side*args.space+args.space,size=[int(np.ceil(random.expovariate(1))),2])
+        #(x,y) = random.choice(coords)
+        #(x,y) = init[np.random.randint(len(init))]
+        (x,y) = random.choice(init)
+        xy = np.array([[np.random.normal(x,r),np.random.normal(y,r)] for i in range(m)])
+        #xy = np.array([[x+((np.abs(np.random.normal(0,r))+1)*random.choice([-1,1])), y+((np.abs(np.random.normal(0,r))+1)*random.choice([-1,1]))] for i in range(m)])
+
+
+    v0 = pat[xy]
+    pat[xy] ^=1 # apply mutation xy
+#    pat[init] |=1 # do not modify initial pattern
+    
+    l = lifespan(pat,100,lmax*args.tol)
+
+    if l==-1:
+        log('RUNAWAY',n,k,l,ath,pat.population,len(xy),r,nath)
+        bb = pat.bounding_box
+        pat.write_rle('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+        pat[xy] = v0 # revert mutation xy
+        bb = pat.bounding_box
+        pat.write_rle('{}/snapshot_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+    elif l==-2:
+        log('GROWTH',n,k,l,ath,pat.population,len(xy),r,nath)
+        bb = pat.bounding_box
+        pat.write_rle('{}/growth_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+        pat[xy] = v0 # revert mutation xy
+        bb = pat.bounding_box
+        pat.write_rle('{}/snapshot_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+    elif l==lmax:
+        log('BEST',n,k,l,ath,pat.population,len(xy),r,nath)
+        k=0
+    elif l>lmax*args.tol:
+        history.append([pat.coords(),l])
+        if l>ath:
+            ath = l
+            fn = '{}/ath_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,pat.population,int(l),args.seed,n)
+            bb = pat.bounding_box
+            pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+            log('ATH',n,k,l,ath,pat.population,len(xy),r,nath)
+            nath=0
+            #init = pat.coords()
+        else:
+            fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,pat.population,int(l),args.seed,n)
+            bb = pat.bounding_box
+            pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+            log('LMAX',n,k,l,ath,pat.population,len(xy),r,nath)
+        k=0
+        lmax=l
+    else:
+        pat[xy] = v0 # revert mutation xy

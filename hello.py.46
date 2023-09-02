@@ -178,7 +178,6 @@ else:
 
 n=0 # total count
 k=0 # backtrack count
-backtrack=0 # backtrack threshold
 best=[]
 #side = args.side
 #space = args.space
@@ -239,7 +238,7 @@ while True:
     #backtrack = np.log(n+1)
     #backtrack = np.log(len(best)+1)
     #backtrack = np.sqrt(len(best))
-    #backtrack = len(best)
+    backtrack = len(best)
 #    if lmax<5000:
 #        side=0
 #    elif lmax<15000:
@@ -266,7 +265,6 @@ while True:
             #pat[x,y] ^= 1
         #lmax += args.period
         lmax = l
-        backtrack = lmax/args.batch
         #l = lifespan(pat,0)
         best.append([pat.coords(),l])
         bb = pat.bounding_box
