@@ -12,8 +12,18 @@ from treelib import Node, Tree
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--meanplus', default=False, action='store_true')
+parser.add_argument('--height', help='manifold height', default=None, type=int)
+parser.add_argument('--width', help='manifold width', default=None, type=int)
+parser.add_argument('--rate', help='prune rate', default=3, type=float)
+parser.add_argument('--prune', help='prune rate', default=3, type=int)
+parser.add_argument('--sigma', help='pruning parameter', default=1.0, type=float)
+parser.add_argument('--sample', help='sampling parameter', default=0.5, type=float)
+parser.add_argument('--tleaf', help='target number of leaf nodes', default=100, type=int)
+parser.add_argument('--step', help='random walk step size', default=0.5, type=float)
+parser.add_argument('--mod', help='bound the INIT cursor brownian motion', default=None, type=int)
+parser.add_argument('--n', help='init parameter', default=1, type=int)
 parser.add_argument('--backtrack', help='backtrack threshold', default=1, type=float)
-parser.add_argument('--sample', help='sampling parameter', default=1, type=float)
 parser.add_argument('--rr', help='root rate', default=100, type=int)
 parser.add_argument('--rootlife', help='lifespan of root', default=1, type=int)
 parser.add_argument('--alt4', default=False, action='store_true')
@@ -85,8 +95,11 @@ def log(hdr,n,k,l,ath,pop,m,r,nath):
 #        h = [tree[i].data[1] for i in list(tree.expand_tree(mode=Tree.WIDTH))[-5:]]
 #    else:
 #        h=''
-    larr=np.array([int(i.tag) for i in tree.all_nodes()])
-    print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} node {:6d} back {:6d} leaves {:4d} depth {:4d} init {:4d} lmean {:12.8f} lmax {:12.8f} level {:4d} bt {:4.0f} lstd {:4.0f}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,len(tree.all_nodes()),nback,len(tree.leaves()),tree.depth(),len(init),np.mean(larr),np.amax(larr),tree.depth(node),bt,np.std(larr)))
+    #larr=np.array([int(i.tag) for i in tree.all_nodes()])
+    print('{:10} wall {} n {:6d} k {:6d} LIFE {:9.0f} ath {:9.0f} pop {:6d} m {:6d} step {:8.4f} node {:6d} back {:6d} leaves {:4d} depth {:4d} init {:4d} prune {:9.0f} lmax {:9.0f} bt {:4.0f} uniq {:6d} modxy {} {} sigma {:8.4f}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,args.step,len(tree.all_nodes()),nback,len(tree.leaves()),tree.depth(),len(init),lmean+args.sigma*lstd,lamax,bt,len(uniq),args.width,args.height,args.sigma))
+    #print('{:10} wall {} n {:6d} k {:6d} LIFE {:9.0f} ath {:9.0f} pop {:6d} m {:6d} step {:8.4f} node {:6d} back {:6d} leaves {:4d} depth {:4d} init {:4d} prune {:9.0f} lmax {:9.0f} level {:4d} bt {:4.0f} lstd {:9.0f} uniq {:6d}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,args.step,len(tree.all_nodes()),nback,len(tree.leaves()),tree.depth(),len(init),lmean+args.sigma*lstd,lamax,0,bt,lstd,len(uniq)))
+    #print('{:10} wall {} n {:6d} k {:6d} LIFE {:9.0f} ath {:9.0f} pop {:6d} m {:6d} step {:8.4f} node {:6d} back {:6d} leaves {:4d} depth {:4d} init {:4d} prune {:9.0f} lmax {:9.0f} level {:4d} bt {:4.0f} lstd {:9.0f} uniq {:6d}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,args.step,len(tree.all_nodes()),nback,len(tree.leaves()),tree.depth(),len(init),lmean+args.sigma*lstd,lamax,tree.depth(node),bt,lstd,len(uniq)))
+    #print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} node {:6d} back {:6d} leaves {:4d} depth {:4d} init {:4d} lmean {:12.8f} lmax {:12.8f} level {:4d} bt {:4.0f} lstd {:4.0f}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,len(tree.all_nodes()),nback,len(tree.leaves()),tree.depth(),len(init),np.mean(larr),np.amax(larr),tree.depth(node),bt,np.std(larr)))
     #print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} nroot {:6d} node {:6d} back {:6d} leaves {:4d} depth {:4d} irad {:12.4f} init {:4d} lmean {:12.8f} pmean {:12.8f}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,nroot,len(tree.all_nodes()),nback,len(tree.leaves()),tree.depth(),args.irad,len(init),np.mean(lmean),np.mean(pmean)))
     #print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} nath {:6d} node {:6d} back {:6d} density {:8.4f} leaves {:4d} depth {:4d} backtrack {:3d} init {:4d} pool {:6d}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,nath,len(tree.all_nodes()),nback,pop/(args.sidex*args.sidey),len(tree.leaves()),tree.depth(),args.backtrack,len(init),len(pool)))
     #print('{:10} wall {} n {:6d} k {:6d} LIFE {:12.4f} ath {:12.4f} pop {:6d} m {:6d} r {:12.8f} nath {:6d} node {:6d} back {:6d} density {:8.4f} leaves {:4d} depth {:4d} backtrack {:3d} init {:4d} lavg {:12.4f} lstd {:12.4f}'.format(hdr,datetime.datetime.now(),n,k,l,ath,pop,m,r,nath,len(tree.all_nodes()),nback,pop/(args.sidex*args.sidey),len(tree.leaves()),tree.depth(),args.backtrack,len(init),lavg,lstd))
@@ -154,6 +167,11 @@ else:
 #        if args.orad is not None:
 #            init.append((-args.spacex//2,-args.spacey//2))
         init0 = np.array(init)
+    elif args.init=="multi":
+        init0=[]
+        for i in range(args.n):
+            init0.append([0,0])
+        init0=np.array(init0)
     else:
         init0=np.array([[0,0]])
     #pat[init] |=1
@@ -186,11 +204,16 @@ nback=0
 #digest={}
 #lavg=0
 #lstd=0
+r = args.rad
 #r = args.rad
-#r = args.rad
-bt = args.backtrack
+#bt = args.backtrack
+#bt = np.ceil(random.expovariate(0.5))
 #credits=0
 nroot=0
+lmean=0
+lstd=0
+lamax=0
+uniq=[]
 while True:
     n+=1
     nath+=1
@@ -218,7 +241,18 @@ while True:
     #if k>args.backtrack and len(tree.all_nodes())>1:
     #if (n%args.backtrack)==0 and len(tree.all_nodes())>1:
         #lmax=0
-    #bt = args.backtrack+np.ceil(random.expovariate(1))
+    #bt=1+np.log(1+len(tree.all_nodes()))
+    #bt = np.ceil(random.expovariate(args.backtrack))
+    #bt = np.ceil(random.expovariate(args.backtrack/(args.tleaf/len(tree.leaves()))))
+    #bt = args.backtrack+np.ceil(random.expovariate(0.5))
+    #bt = args.backtrack+np.ceil(random.expovariate(args.sample))
+
+    if ath>0:
+        bt=args.backtrack
+        #bt = np.log(ath)
+    else:
+        bt=args.backtrack
+
     if k>bt:
         #k=0
         nback +=1
@@ -354,37 +388,43 @@ while True:
 #            node = np.random.choice(pool)
 #            credits -= 1
 
-        while True:
-            pool = tree.all_nodes()
-            #larr = np.array([i.data[5] for i in pool]) # level
-            #larr = np.array([tree.depth(i) for i in pool])
-            larr = np.array([int(i.tag) for i in pool]) # lifespan distribution
-            #node = pool[np.argmax(larr)]
+        #nleaf = len(tree.leaves())
+        #if len(tree.leaves())>args.minleaves:
+        #    pool = tree.leaves()
+        #else:
+        #    pool = tree.all_nodes()
+        pool = tree.all_nodes()
+        larr = np.array([int(i.tag) for i in pool]) # lifespan distribution
+
+        # for efficiency, only select nodes > lmean
+        if args.meanplus:
             lmean = np.mean(larr)
             lstd = np.std(larr)
+            pool = [i for i in pool if int(i.tag)>lmean]
+            larr = np.array([int(i.tag) for i in pool]) # lifespan distribution
 
-            try:
-                if args.alt:
-                    larr = np.square(larr)
-                if args.alt2:
-                    larr = np.multiply(larr, np.log(larr))
-                prob = larr / np.sum(larr)
-                node = np.random.choice(pool, p=prob)
-            except:
-                node = np.random.choice(pool)
+        if args.alt:
+            larr = np.square(larr)
+        if args.alt2:
+            larr = np.multiply(larr, np.log(larr))
+        if args.alt3:
+            larr = np.multiply(larr, np.sqrt(larr))
 
-            (xy,lmax,bt,init,nvisit,level) = node.data
-            #bt = int(np.random.exponential(scale=np.log(lmax)))
-            #if nvisit>args.maxvisit and node.is_leaf() and node!=root:
-            #if nvisit>np.random.exponential(scale=args.sample) and node.is_leaf() and node!=root:
-            #if node.is_leaf() and node!=root and nvisit>np.random.exponential(scale=np.log(lmax)) :
-            #if node.is_leaf() and node!=root and nvisit>args.sample:
-            #if node.is_leaf() and node!=root and (lmax<lmean or nvisit>np.log(lmax)):
-            if node.is_leaf() and node!=root and lmax<lmean+lstd:
-                tree.remove_node(node.identifier)
-            else:
-                node.data = (xy,lmax,bt,init,nvisit+1,level)
-                break
+        try:
+            prob = larr / np.sum(larr)
+            node = np.random.choice(pool, p=prob)
+        except:
+            print("RANDOM CHOICE ERROR")
+            node = np.random.choice(pool)
+
+        (xy,lmax,_,init,nvisit,level) = node.data
+        #bt = int(np.random.exponential(scale=np.log(lmax)))
+        #if nvisit>args.maxvisit and node.is_leaf() and node!=root:
+        #if nvisit>np.random.exponential(scale=args.sample) and node.is_leaf() and node!=root:
+        #if node.is_leaf() and node!=root and nvisit>np.random.exponential(scale=np.log(lmax)) :
+        #if node.is_leaf() and node!=root and nvisit>args.sample:
+        #if node.is_leaf() and node!=root and (lmax<lmean or nvisit>np.log(lmax)):
+        #node.data = (xy,lmax,foo,init,nvisit+1,level)
         #init = np.copy(init0)
         pat = lt.pattern()
         pat[xy] |=1
@@ -424,20 +464,54 @@ while True:
 #        xy = np.array(xy)
 #        m = len(xy)
 
-        #m = np.ceil(random.expovariate(1))
+        #m = int(np.ceil(random.expovariate(1)))
+        m=1
         #r = np.log(lmax+1)+args.rad
         #if lmax==0:
         #    r = args.rad
         #else:
         #    r = np.log(np.log(lmax))/np.sqrt(2)
-        r = args.rad
-        i = random.choice(range(len(init)))
-        init[i] += np.random.normal(0,r,size=2) # jiggle
-        xy = np.around(init[i]).reshape([1,2])
+        #r = args.rad
+        xy=[]
+        for i in random.choices(range(len(init)), k=m):
+            #i = random.choice(range(len(init)))
+            #init[i] += np.random.normal(0,r,size=2) # jiggle
+            #init[i] += np.random.normal(0,r,size=2) # jiggle
+            #init[i] += np.array([random.choice([-1,+1]), random.choice([-1,+1])])
+            #init[i] = np.array([init[i][0]+random.choice([-args.step,0,+args.step]), random.choice([-2,-1,0,1,2])])
+            init[i] += np.array([random.choice([-args.step,+args.step]), random.choice([-args.step,+args.step])])
+    
+            if args.height is not None:
+                if init[i][1]>args.height:
+                    init[i][1] -=args.height*2+1
+                if init[i][1]<-args.height:
+                    init[i][1] +=args.height*2+1
+    
+            if args.width is not None:
+                if init[i][0]>args.width:
+                    init[i][0] -=args.width*2+1
+                if init[i][0]<-args.width:
+                    init[i][0] +=args.width*2+1
+
+            #print('xy before',xy)
+            #if args.mod is not None:
+            #    init[i] = np.clip(init[i],-args.mod,+args.mod)
+                #for j in range(2):
+                #    while xy[0,j] <= -args.mod:
+                #        #print('j',j,'neg mod',xy[0,j],xy[0,j] +2*args.mod)
+                #        xy[0,j] += 2*args.mod
+                #    while xy[0,j] > args.mod:
+                #        #print('j',j,'pos mod',xy[0,j],xy[0,j]-2*args.mod)
+                #        xy[0,j] -= 2*args.mod
+            xy.append(np.around(init[i]).reshape([1,2]))
+        xy = np.array(xy)
+        #print('xy after ',xy)
+        #xy = np.fix(init[i]).reshape([1,2])
+
         #xy = np.around(init[i] + np.random.normal(0,r,size=2)).reshape([1,2])
         #print('xy',xy,pat[xy])
 
-        m = 1
+        #m = 1
 
 
     # NEW
@@ -453,6 +527,7 @@ while True:
     
     l = lifespan(pat,100,lmax*args.tol)
 
+
     if l==-1:
         log('RUNAWAY',n,k,l,ath,pat.population,m,r,nath)
         bb = pat.bounding_box
@@ -460,13 +535,15 @@ while True:
         pat[xy] = v0 # revert mutation xy
         bb = pat.bounding_box
         pat.write_rle('{}/snapshot_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
-    elif l==-2:
+        continue
+    if l==-2:
         log('GROWTH',n,k,l,ath,pat.population,m,r,nath)
         bb = pat.bounding_box
         pat.write_rle('{}/growth_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
         pat[xy] = v0 # revert mutation xy
         bb = pat.bounding_box
         pat.write_rle('{}/snapshot_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+        continue
         # add snapshots to tree
         #bt=np.log(l)
 #        d = pat.digest()
@@ -476,13 +553,17 @@ while True:
 #            node = tree.create_node(tag=l, identifier=d, parent=node, data=[pat.coords(),l,bt,np.copy(init)])
 #            lmean.append(l)
 #            pmean.append(pat.population)
-    elif l==lmax:
+    #pat = pat.advance(1)
+    #l = l-1
+    if l==lmax:
         log('BEST',n,k,l,ath,pat.population,m,r,nath)
         k=0
     elif l>lmax*args.tol:
         # add new lmax to tree
         #bt=np.log(l)
         d = pat.digest()
+        if d not in uniq:
+            uniq.append(d)
         #print('DIGEST',d,pat.population,pat.coords())
         if d not in [v.identifier for v in tree.all_nodes()]: # no dups
             #node = tree.create_node(tag=l, identifier=d, parent=node, data=[pat.coords(),l,r*args.growth,init])
@@ -491,7 +572,12 @@ while True:
             #bt = int(np.ceil(np.sqrt(tree.depth(node)+1)))
             #bt = int(np.ceil(np.log(l)))
             #bt = int(np.random.exponential(scale=np.log(l)))
-            node = tree.create_node(tag=l, identifier=d, parent=node, data=[pat.coords(),l,args.backtrack,np.copy(init),0,tree.depth(node)])
+            #if l>100:
+            #    l-=1
+            #    pat=pat.advance(1)
+            #print('node',node)
+            node = tree.create_node(tag=l, identifier=d, parent=node, data=[pat.coords(),l,None,np.copy(init),0,tree.depth(node)])
+            #node = tree.create_node(tag=l-1, identifier=d, parent=node, data=[pat.advance(1).coords(),l-1,None,np.copy(init),0,tree.depth(node)])
             #print('level',tree.level(node.identifier))
             #lmean.append(l)
             #pmean.append(pat.population)
@@ -502,9 +588,18 @@ while True:
             bb = pat.bounding_box
             pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
             log('ATH',n,k,l,ath,pat.population,m,r,nath)
+            print('INIT',[init[i] for i in range(len(init))])
             tree.show(idhidden=True)
             nath=0
-            #init = pat.coords()
+            ## prune
+            #pool = tree.all_nodes()
+            #larr = np.array([int(i.tag) for i in pool]) # lifespan distribution
+            #lmean = np.mean(larr)
+            #lstd = np.std(larr)
+            #lamax = np.amax(larr)
+            #for nn in tree.leaves():
+            #    if nn!=root and int(nn.tag)<lmean+args.sigma*lstd:
+            #        tree.remove_node(nn.identifier)
         else:
             #fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,pat.population,int(l),args.seed,n)
             #bb = pat.bounding_box
@@ -512,6 +607,21 @@ while True:
             log('LMAX',n,k,l,ath,pat.population,m,r,nath)
         k=0
         lmax=l
+        # prune
+        pool = tree.all_nodes()
+        larr = np.array([int(i.tag) for i in pool]) # lifespan distribution
+        lmean = np.mean(larr)
+        lstd = np.std(larr)
+        lamax = np.amax(larr)
+        for j in range(args.prune):
+            nn = random.choice(tree.leaves())
+        for nn in tree.leaves():
+            if np.random.uniform()<args.rate and nn!=root and int(nn.tag)<lmean+args.sigma*lstd:
+                #print('nn',nn)
+                if nn==node:
+                    node=tree.parent(node.identifier)
+                tree.remove_node(nn.identifier)
+
         #credits += args.rr
         #bt+=args.btboost
         #bt+=np.log(lmax)

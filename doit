@@ -1,9 +1,134 @@
 while true
 do
     current_time=$(date "+%Y.%m.%d-%H.%M.%S")
-    unbuffer python3 entropy.py --alt2 --backtrack 3 --rad 1.414213562 --init grid2 --sidex 200 --sidey 200 --spacex 100 --spacey 100 |& tee results/log.$current_time
+    unbuffer python3 gliders.py --multimut --mininit 0 --rad 0.45 --xorthresh 0.666 --memory 30000 --gcoord gaussian --ipop 3 --irad2 3 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mininit 0 --rad 0.4 --effort 2 --xorthresh 0.4 --memory 30000 --gcoord gaussian --ipop 20 --irad2 30 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mininit 0 --rad 0.43 --effort 3 --xorthresh 0.6 --memory 30000 --gcoord gaussian --ipop 15 --irad2 12 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mininit 0 --rad 0.43 --effort 3 --xorthresh 0.6 --memory 30000 --gcoord gaussian --ipop 4 --irad2 4 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mininit 0 --rad 0.367879441 --effort 1 --xorthresh 0.5 --memory 30000 --gcoord gaussian --ipop 3 --irad2 10 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mininit 0 --rad 0.333 --effort 1 --xorthresh 0.333 --memory 30000 --gcoord gaussian --ipop 3 --irad2 3 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mininit 0 --rad 0.42 --effort 3 --xorthresh 0.333 --memory 30000 --gcoord gaussian --ipop 3 --irad2 3 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mininit 0 --rad 0.367879441 --blast 1 --effort 3 --xorthresh 0.5 --memory 30000 --gcoord gaussian --ipop 3 --irad2 3 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mininit 0 --rad 0.3 --blast 1 --effort 3 --xorthresh 0.5 --memory 30000 --gcoord gaussian --ipop 3 --irad2 3 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mininit 0 --rad 0.375 --blast 0.5 --effort 1 --xorthresh 0.0 --memory 30000 --gcoord gaussian --ipop 3 --irad2 7 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mininit 1000 --rad 0.43 --blast 1 --effort 1 --xorthresh 0.5 --memory 30000 --gcoord gaussian --ipop 2 --irad2 3 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mininit 1000 --rad 0.55 --blast 1 --effort 1 --xorthresh 0.5 --memory 30000 --gcoord gaussian --ipop 2 --irad2 3 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mininit 2000 --rad 0.682689492 --multimut --blast 1 --effort 1 --xorthresh 0.3 --memory 30000 --gcoord gaussian --ipop 3 --irad2 4 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --blast 0.5 --effort 0.682689492 --xorthresh 0.5 --memory 30000 --gcoord gaussian --ipop 40 --irad2 20 --irad 80 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --blast 0.5 --effort 1 --xorthresh 0.5 --memory 30000 --gcoord gaussian --ipop 30 --irad2 15 --irad 150 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --blast 1 --effort 1 --xorthresh 0.3 --memory 30000 --gcoord gaussian --irad 100 --ipop 15 --irad2 100 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --blast 0.5 --effort 1 --xorthresh 0.3 --memory 30000 --gcoord gaussian --irad 50 --ipop 30 --irad2 100 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --effort 1 --xorthresh 0.3 --memory 30000 --gcoord gaussian --irad 100 --ipop 15 --irad2 10 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --rate 0.682689492 --multimut --effort 0.682689492 --xorthresh 0.5 --memory 30000 --gcoord gaussian --irad 100 --ipop 15 --irad2 10 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --maxsib 370 --multimut --effort 1 --xorthresh 0.5 --memory 30000 --gcoord gaussian --irad 100 --ipop 15 --irad2 10 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --rate 1.0 --effort 1 --xorthresh 0.682689492 --memory 30000 --gcoord gaussian --irad 50 --ipop 15 --irad2 10 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --effort 0.5 --xorthresh 0.0 --memory 30000 --gcoord gaussian --irad 150 --ipop 15 --irad2 15 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --effort 1 --xorthresh 0.3 --memory 30000 --gcoord gaussian --irad 50 --ipop 25 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --effort 0.682689492 --xorthresh 0.682689492 --memory 30000 --gcoord gaussian --irad 50 --ipop 25 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --effort 1 --xorthresh 0.1 --memory 30000 --gcoord gaussian --irad 100 --ipop 20 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --effort 1 --mut xor --xorthresh 0.5 --memory 30000 --gcoord linear --irad 400 --gvec 80 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --effort 0.682689492 --mut xor --xorthresh 0.5 --memory 30000 --gcoord linear --irad 500 --gvec 100 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mut xor --xorthresh 0.5 --memory 30000 --gcoord linear --irad 400 --gvec 100 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mut xor --xorthresh 0.5 --memory 30000 --gcoord linear --irad 400 --gvec 100 --iroot 1 --top 99.9999426697 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --mut xor --xorthresh 0.5 --memory 30000 --gcoord linear --irad 1000 --gvec 250 --iroot 1 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --alt5 --exp 2.0 --mut xor --xorthresh 0.5 --memory 30000 --gcoord linear --irad 2000 --gvec 500 --iroot 1 --top 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --alt5 --exp 4.0 --mut xor --xorthresh 0.5 --memory 30000 --gcoord concentric --gcinner 5 --gcrings 8 --gcspace 10 --gvec 120 --iroot 10000 --top 99.9936 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --alt5 --exp 4.0 --mut xor --xorthresh 0.5 --memory 30000 --gcoord concentric --gcinner 5 --gvec 80 --iroot 1 --top 99.9936 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --alt5 --exp 4.0 --mut xor --xorthresh 0.5 --memory 30000 --gcoord concentric --gcinner 5 --gvec 29 --iroot 100 --top 99.9936 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --alt5 --exp 4.0 --backtrack 1 --prune --nsprune 3 --mut xor --xorthresh 0.5 --memory 30000 --gcoord gaussian --irad 50 --gvec 100 --iroot 1000 --top 99.9936 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --alt5 --exp 4.0 --backtrack 1 --prune --nsprune 3 --mut xor --xorthresh 0.5 --memory 30000 --gcoord multi --gcinner 10 --gcspace 15 --gcrings 7 --iroot 100 --top 99.9936 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut xor --xorthresh 0.5 --memory 30000 --gcoord multi --gcinner 10 --gcspace 5 --gcrings 17 --iroot 100 --top 99 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --prune --nsprune 22 --mut xor --xorthresh 0.5 --memory 30000 --gvec 254 --gcoord multi --gcinner 10 --gcspace 5 --gcrings 17 --iroot 10 --top 99 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --prune --nsprune 7 --mut ones --memory 30000 --gcoord multi --gvec 256 --gcinner 10 --gcspace 6 --gcrings 16 --iroot 1 --top 99 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --prune --nsprune 22 --mut xor --xorthresh 0.5 --memory 30000 --gcoord multi --gvec 256 --gcinner 10 --gcspace 6 --gcrings 16 --iroot 22 --top 99 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --prune --nsprune 22 --mut ones --memory 30000 --gcoord multi --gvec 256 --gcinner 10 --gcspace 6 --gcrings 8 --iroot 1 --top 99 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut xor --xorthresh 0.5 --memory 30000 --gcoord binary --gvec 200 --irad 50 --irad2 100 --iroot 1 --top 99 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut xor --xorthresh 0.5 --memory 30000 --gcoord gaussian --gvec 120 --irad 50 --iroot 1 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut ones --memory 30000 --gcoord single --gvec 64 --irad 50 --iroot 100 --top 99.9936 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut xor --xorthresh 0.5 --memory 30000 --gcoord single --gvec 72 --irad 50 --iroot 10000 --top 99.73 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut ones --memory 30000 --gcoord single --gvec 50 --irad 50 --iroot 1 --top 99.73 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut xor --xorthresh 0.5 --memory 30000 --gcoord gaussian --gvec 100 --irad 150 --iroot 3 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut xor --xorthresh 0.5 --memory 30000 --gcoord single --gvec 100 --irad 150 --iroot 22 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut ones --memory 30000 --gcoord single --gvec 100 --irad 200 --iroot 1 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut xor --xorthresh 0.05 --memory 30000 --gcoord gaussian --gvec 100 --irad 50 --iroot 1 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --gcoord gaussian --gvec 1000 --ipop 15 --irad 200 --iroot 1 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --gcoord gaussian --gvec 1000 --irad 200 --iroot 1 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --gcoord multi --gcmulti 5 --gvec 100 --gcinner 40 --irad 20 --iroot 100 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --keep --memory 30000 --gcoord multi --gcmulti 4 --gvec 160 --irad 100 --iroot 3 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --gcoord multi --gcmulti 3 --gvec 180 --irad 100 --iroot 22 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --gcoord tri --gvec 180 --irad 100 --iroot 22 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --gcoord tri --gvec 30 --irad 30 --iroot 22 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --gcoord binary --gvec 40 --irad 40 --irad2 80 --iroot 22 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --gcoord binary --gvec 100 --irad 100 --irad2 200 --ipop 50 --iroot 22 --top 99.73 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --np 50 --irad 200 --ipop 15 --iroot 1 --top 99.73 --rate 0.5 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --ipop 15 --iroot 22 --top 99.73 --rate 0.5 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --rad 100 --ipop 15 --iroot 22 --top 99.73 --rate 0.5 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --width 1500 --height 15 --ipop 50 --iroot 10000 --top 99.73 --rate 0.5 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --memory 30000 --aspect 10 --irad 20 --ipop 15 --iroot 10000 --top 99.73 --rate 0.5 --multimut |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --irad 200 --decay 0.95 --pow 2.0 --top 99.73 --rate 0.5 --multimut --srad 20 --nseed 10 --iroot 1 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --irad 200 --pow 2.0 --top 99.73 --rate 0.682689492 --multimut --srad 20 --nseed 10 --iroot 10000 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --pow 2.0 --top 99.73 --rate 0.682689492 --rscale 1.414213562 --multimut --srad 20 --nseed 10 --iroot 1000 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --pow 2.0 --top 99.73 --rate 0.682689492 --rscale 0.682689492 --multimut --srad 20 --nseed 10 --iroot 100 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --ptile 0.682689492 --pow 2.0 --top 99.73 --prune 22 --alt3 --rate 0.682689492 --rscale 0.682689492 --under 0.0 --over 0.0 --multimut --srad 20 --nseed 10 --iroot 100 --tleaf 0 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --ptile 0.682689492 --pow 2.0 --top 100 --pruneinit 0 --prune 30 --alt3 --rate 0.682689492 --rscale 0.682689492 --under 0.0 --over 0.0 --multimut --srad 20 --nseed 10 --iroot 370 --tleaf 0 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --rate 0.682689492 --rscale 0.682689492 --under 0.99 --over 1.01010101 --multimut --srad 10 --nseed 3 --iroot 20000 --tleaf 10000 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --rate 0.682689492 --rscale 0.682689492 --under 0.99 --over 1.01010101 --multimut --srad 10 --nseed 3 --iroot 100 --tleaf 100 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --rate 0.682689492 --rscale 0.682689492 --under 0.99 --over 1.01010101 --multimut --srad 10 --nseed 3 --iroot 100 --tleaf 1000 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --rate 0.682689492 --rscale 0.682689492 --under 0.99 --over 1.01010101 --multimut --srad 10 --nseed 3 --iroot 1000 --tleaf 370 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --rate 0.5 --rscale 1.0 --under 0.99 --over 1.01010101 --multimut --srad 10 --nseed 3 --iroot 100 --tleaf 100 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --rate 0.5 --rscale 0.682689492 --under 0.99 --over 1.01010101 --multimut --srad 10 --nseed 3 --iroot 100 --tleaf 100 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --rate 0.6 --rscale 0.3183 --under 0.99 --over 1.01010101 --multimut --srad 10 --nseed 3 --iroot 100 --tleaf 100 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --under 0.99 --over 1.01010101 --multimut --srad 10 --nseed 3 --iroot 100 --tleaf 100 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --alt2 --srad 5 --nseed 5 --ipop 0 --irad 200 --iroot 10000 --percentile 0.0 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --alt2 --srad 5 --nseed 5 --ipop 0 --irad 200 --iroot 10000 --percentile 0.0 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --alt2 --srad 5 --nseed 5 --ipop 0 --irad 200 --iroot 1 --percentile 0.317310508 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --srad 5 --nseed 5 --ipop 0 --irad 200 --iroot 370 --percentile 15.9 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --iroot 1 --percentile 50 --backtrack 20 --irad 400 --ipop 400 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --iroot 22 --percentile 31.7310508 --backtrack 30 --irad 150 --ipop 10 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --iroot 22 --percentile 31.7310508 --backtrack 3 --irad 200 --ipop 300 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --multimut --iroot 22 --percentile 31.7310508 --backtrack 3 --irad 200 --ipop 400 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --iroot 1 --percentile 10 --backtrack 3 --irad 200 --ipop 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --iroot 1 --percentile 80 --leaves 22 --rate 1 --step 1 --backtrack 3 --irad 200 --ipop 400 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --iroot 1 --percentile 68.2689492 --leaves 22 --rate 1 --step 1 --backtrack 3 --irad 30 --ipop 20 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --minleaves 2 --rate 1 --sigma 0.0 --step 1 --backtrack 3 --init gauss --irad 50 --ipop 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --meanplus --rate 1 --sigma 0.682689492 --step 1 --backtrack 3 --init gauss --irad 200 --ipop 100 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --meanplus --rate 1 --sigma 0.0 --step 0 --backtrack 3 --init grid2 --sidex 384 --sidey 384 --spacex 24 --spacey 24 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --meanplus --rate 1 --sigma 0.5 --step 1 --backtrack 7 --sidex 200 --sidey 200 --spacex 40 --spacey 40 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --height 16 --width 16 --rate 1 --sigma 0.0 --step 0.682689492 --backtrack 3 --init grid2 --sidex 10 --sidey 10 --spacex 10 --spacey 10 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rate 1 --sigma 0.5 --step 1 --backtrack 3 --init multi --n 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --height 32 --width 32 --rate 1 --sigma 1 --step 0.682689492 --backtrack 7 --init multi --n 16 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --height 8 --width 128 --alt2 --rate 0.0454545 --sigma 1 --step 0.682689492 --backtrack 7 --init grid2 --sidex 32 --sidey 16 --spacex 16 --spacey 16 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rate 0.10 --sigma 1 --step 0.682689492 --height 64 --width 64 --backtrack 7 --init multi --n 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --rate 0.0454545 --sigma 1 --step 2.718281828 --height 16 --width 16 --backtrack 7 --init multi --n 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt3 --rate 0.0454545 --sigma 1 --step 0.682689492 --height 32 --width 32 --backtrack 7 --init multi --n 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt --rate 0.05 --sigma 1 --step 1 --height 2 --width 528 --backtrack 3 --init grid2 --sidex 1024 --sidey 5 --spacex 32 --spacey 5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt3 --rate 0.05 --sigma 1 --step 1 --backtrack 3 --init multi --n 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --prune 3 --sigma 1 --step 1 --backtrack 3 --init multi --n 16 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --prune 2 --sigma 1 --step 1 --backtrack 3 --init grid2 --sidex 200 --sidey 100 --spacex 100 --spacey 100 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --prune 2 --sigma 1 --step 1 --backtrack 3 --init grid2 --sidex 200 --sidey 100 --spacex 100 --spacey 100 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --prune 2 --sigma 1 --step 1 --backtrack 3 --init multi --n 2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --prune 2 --sigma 1 --step 1 --backtrack 3 --init grid2 --sidex 96 --sidey 96 --spacex 32 --spacey 32 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --prune 3 --sigma 1 --step 1 --backtrack 3 --init multi --n 3 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --sigma 1 --step 1 --backtrack 3 --init grid2 --sidex 256 --sidey 32 --spacex 32 --spacey 32 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --sigma 1 --step 1 --backtrack 3 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --sigma 1 --step 1 --backtrack 1 --sample 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --sigma 1 --step 1 --backtrack 1 --sample 0.5 --init grid2 --sidex 256 --sidey 32 --spacex 32 --spacey 32 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --sigma 1 --step 1 --backtrack 3 --init grid2 --sidex 256 --sidey 32 --spacex 32 --spacey 32 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --sigma 2 --step 1 --sample 0.5 --backtrack 2 --init grid2 --sidex 1024 --sidey 32 --spacex 32 --spacey 32 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --sample 0.682689492 --step 1 --backtrack 1 --tleaf 100 --init grid2 --sidex 192 --sidey 192 --spacex 64 --spacey 64 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --sample 0.682689492 --step 1 --backtrack 1 --tleaf 100 --init multi --n 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --step 1 --backtrack 0.682689492 --alt2 --init multi --n 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --step 0.682689492 --backtrack 3 --alt2 --init grid2 --sidex 128 --sidey 64 --spacex 64 --spacey 64 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --step 0.682689492 --backtrack 3 --alt2 --init grid2 --sidex 96 --sidey 96 --spacex 32 --spacey 32 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --step 0.682689492 --backtrack 3 --alt2 --init grid2 --sidex 512 --sidey 512 --spacex 32 --spacey 32 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --step 0.682689492 --init multi --n 22 --backtrack 3 --alt2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --step 0.5 --init multi --n 1 --backtrack 3 --alt2 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --mod 50 --init multi --n 3 --backtrack 3 --alt2 --rad 0.5 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --init multi --n 2 --backtrack 3 --alt2 --rad 1 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --backtrack 3 --alt --rad 1.414213562 --init grid2 --sidex 128 --sidey 128 --spacex 8 --spacey 8 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --backtrack 3 --rad 1 --init grid2 --sidex 100 --sidey 100 --spacex 50 --spacey 50 |& tee results/log.$current_time
+    #unbuffer python3 entropy.py --alt2 --backtrack 3 --rad 1 --init grid2 --sidex 600 --sidey 600 --spacex 150 --spacey 150 |& tee results/log.$current_time
     #unbuffer python3 entropy.py --backtrack 3 --alt2 --rad 1.414213562 |& tee results/log.$current_time
-    #unbuffer python3 entropy.py --backtrack 3 --alt2 --rad 1 |& tee results/log.$current_time
     #unbuffer python3 entropy.py --backtrack 3 --alt2 --rad 1.414213562 |& tee results/log.$current_time
     #unbuffer python3 entropy.py --rad 1.414213562 --sample 1.414213562 |& tee results/log.$current_time
     #unbuffer python3 entropy.py --rad 0.682689492 --sample 7 |& tee results/log.$current_time
