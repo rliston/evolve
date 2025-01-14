@@ -7,10 +7,288 @@ import lifelib ; print('lifelib',lifelib.__version__)
 import scipy.stats
 import os
 import copy
-#import treelib
 from treelib import Node, Tree
-#import hashlib
 import pickle
+
+np.set_printoptions(linewidth=250)
+parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--mut', help='mutation type {single,dual}', default='single')
+parser.add_argument('--dup', default=False, action='store_true')
+parser.add_argument('--ipool', help='minimum samples before pruning', default=100, type=int)
+#parser.add_argument('--cmax', help='prune threshold', default=4, type=float)
+parser.add_argument('--prune', help='prune threshold', default=20, type=float)
+#parser.add_argument('--pmax', help='prune threshold', default=200, type=float)
+#parser.add_argument('--pool', help='prune to mean if tree exceeds args.pool length', default=100, type=int)
+parser.add_argument('--spacex', help='grid spacing', default=10, type=int)
+parser.add_argument('--spacey', help='grid spacing', default=10, type=int)
+parser.add_argument('--sidex', help='grid size = side*2+1', default=50, type=int)
+parser.add_argument('--sidey', help='grid size = side*2+1', default=50, type=int)
+parser.add_argument('--seed', help='random seed', default=None, type=int)
+parser.add_argument('--memory', help='garbage collection limit in MB', default=50000, type=int)
+parser.add_argument('--results', help='results directory', default='./results')
+parser.add_argument('--debug', default=False, action='store_true')
+args = parser.parse_args()
+if args.seed is None:
+    args.seed = random.randint(1,1000000)
+random.seed(args.seed)
+np.random.seed(args.seed)
+print(args)
+
+sess = lifelib.load_rules("b3s23")
+lt = sess.lifetree(memory=args.memory)
+
+def log(hdr):
+    print('{:10} wall {} n {:6d} k {:6d} LIFE {:9.0f} ath {:9.0f} pop {:6d} m {:6d} prune {:8.3f} node {:6d} final {:6d} ndup {:6.0f} cmax {:6.0f} lmean {:9.0f} uniq {:9.0f} lmax {:9.0f} cmean {:6.2f} lmin {:9.3f} ipool {:6d}'.format(
+        hdr,datetime.datetime.now(),n,n1,l,ath,pat.population,m,args.prune,len(tree),pop,ndup,np.max(carr),np.mean(larr),len(uniq),np.max(larr),np.mean(carr),np.min(larr),args.ipool))
+
+# run soup until population is stable, starting at generation lmax
+def lifespan(pat,period=100,lmax=0,step=1):
+        pt = np.zeros(period)
+        o = int(max(0,lmax-period))
+        pat = pat.advance(o) # jump to lmax
+        for j in range(1000000//(step*period)):
+            for k in range(period):
+                pt[k] = pat.population
+                pat = pat.advance(step)
+            value,counts = np.unique(pt, return_counts=True) # histogram of population trace
+            e = scipy.stats.entropy(counts,base=None) # entropy of population distribution 
+            if e<0.682689492*np.log(period): # HEURISTIC: threshold
+                return max(0,o+j*step*period),pat.population
+        return -1,pat.population # runaway
+
+#transforms = ["flip","rot180","identity","transpose","flip_x","flip_y","rot90","rot270","swap_xy","swap_xy_flip","rcw","rccw"]
+# 2 phases X 4 rotations
+gliders=[]
+gliders.append(np.array([[0,-1],[1,-1],[-1,0],[0,0],[1,1]]))
+gliders.append(np.array([[-1,-1],[0,0],[1,0],[-1,1],[0,1]]))
+gliders.append(np.array([[0,-1],[0,0],[1,0],[-1,1],[1,1]]))
+gliders.append(np.array([[-1,-1],[1,-1],[-1,0],[0,0],[0,1]]))
+gliders.append(np.array([[-1,-1],[0,-1],[-1,0],[1,0],[-1,1]]))
+gliders.append(np.array([[1,-1],[-1,0],[1,0],[0,1],[1,1]]))
+gliders.append(np.array([[-1,-1],[0,-1],[1,-1],[1,0],[0,1]]))
+gliders.append(np.array([[0,-1],[-1,0],[-1,1],[0,1],[1,1]]))
+
+#states=[0,1,2,3,4,5,6,7,None]
+states=[0,1,2,3,4,5,6,7]
+
+def render(pat,v):
+    for (x0,y0,s) in v:
+        #x0 = int(np.around(x0))
+        #y0 = int(np.around(y0))
+        xy = [[x0+x,y0+y] for x in range(-1,2) for y in range(-1,2)]
+        xy = np.array(xy)
+        pat[xy]&=0
+        if s is not None:
+            xy = [[x0+x,y0+y] for (x,y) in gliders[s]]
+            xy = np.array(xy)
+            pat[xy]|=1
+
+tree=[]
+uniq={}
+pat = lt.pattern()
+
+# INITIAL PATTERNS
+def append_tree():
+    pat = lt.pattern()
+    while True:
+        svec = [(x,y,random.choice(states)) for x in range(-args.sidex//2,args.sidex//2,args.spacex) for y in range(-args.sidey//2,args.sidey//2,args.spacey)]
+        render(pat,svec)
+        if pat.digest() not in uniq:
+            l,pop = lifespan(pat,400,0)
+            if l>0:
+                break
+    # mut
+    vlen = len(svec)
+    mset = list(range(0,vlen))
+    random.shuffle(mset)
+    mset1=mset[0:vlen//2]
+    mset2=mset[vlen//2:]
+    tree.append([l,svec,0,(mset1,mset2)])
+    uniq[pat.digest()]=True
+    return pat,l,pop,svec
+
+for k in range(args.ipool):
+    pat,l,pop,svec = append_tree()
+    print('svec',k,l,pop,len(svec))
+    if k==0:
+        fn = '{}/init_G{:06d}_seed{:09d}.rle'.format(args.results,len(svec),args.seed)
+        bb = pat.bounding_box
+        pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+
+
+# MAIN LOOP
+n=0
+n0=0
+n1=0
+ndup=0
+ath=0
+lmax0=0
+m=0
+while True:
+    if len(tree)==0:
+        print('EMPTY TREE')
+        break
+    # statistics
+    larr = np.array([x[0] for x in tree])
+    carr = np.array([x[2] for x in tree])
+    #cmax = args.cmax/np.log(len(tree))
+    #cmax = args.cmax
+    #log('DEBUG')
+    #pool=args.pool
+    #if np.std(carr)>args.pool:
+    #    pool = args.pool*np.mean(carr)
+    #else:
+    #    pool = args.pool
+
+    # save interesting patterns
+    if np.max(larr)!=lmax0:
+        lmax0=np.max(larr)
+        pat0=lt.pattern()
+        ref = tree[np.argmax(larr)][1]
+        render(pat,tree[np.argmax(larr)][1])
+        fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,pat.population,int(lmax0),args.seed,n)
+        bb = pat.bounding_box
+        pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+        log('LMAX')
+
+    # sample the pool of initial state vectors
+    nodeidx = np.random.randint(0,len(tree))
+    (lmax,ivec,nc,(mset1,mset2)) = tree[nodeidx]
+
+    # mutate
+    imut = ivec.copy()
+    m=1
+    #m = int(np.ceil(random.expovariate(1)))
+    #m = np.random.randint(1,len(ivec))
+    #m = int(np.ceil(random.expovariate(1/(1+np.max(carr)))))
+    #m = 1+np.random.randint(1+np.ceil(np.mean(carr)))
+    #m = int(len(ivec)/(1+np.mean(carr)))
+    #print('m',m)
+    for i in range(m):
+        if args.mut=='single':
+            k = np.random.randint(0,len(imut))
+            while True:
+                ns = random.choice(states)
+                if ns!=imut[k][2]:
+                    break
+            imut[k] = [imut[k][0],imut[k][1],ns]
+        elif args.mut=='dual':
+            #k = np.random.randint(0,len(imut)//2)*2 # even
+            #k = np.random.randint(0,len(imut)//2)
+            k = random.choice(mset1)
+            while True:
+                ns = random.choice(states)
+                if ns!=imut[k][2]:
+                    break
+            imut[k] = [imut[k][0],imut[k][1],ns]
+            #k = np.random.randint(0,len(imut)//2)*2+1 # odd
+            #k = np.random.randint(len(imut)//2,len(imut))
+            k = random.choice(mset2)
+            while True:
+                ns = random.choice(states)
+                if ns!=imut[k][2]:
+                    break
+            imut[k] = [imut[k][0],imut[k][1],ns]
+
+    # run the pattern
+    render(pat,imut)
+    l,pop = lifespan(pat,100,lmax,step=1)
+    n+=1
+    if pat.digest() in uniq:
+        tree[nodeidx][2]+=1
+        log("DUP")
+        ndup+=1
+        if args.dup:
+            append_tree() # if dup then add new seed pattern to pool
+    elif l==-1:
+        tree[nodeidx][2]+=1
+        log('RUNAWAY')
+        bb = pat.bounding_box
+        pat.write_rle('{}/runaway_L{:09d}_seed{:09d}_n{:09d}.rle'.format(args.results,l,args.seed,n), header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+    elif l>lmax:
+        n1=n-n0
+        n0=n
+        uniq[pat.digest()]=True
+        tree[nodeidx][2]=0
+        tree.append([l,imut,0,tree[nodeidx][3]])
+        # prune
+        #cmax = np.log(np.mean(larr)) - np.log(1+len(tree))
+        #tree = [x for x in tree if x[2]<cmax]
+        #print([x for x in tree])
+        #tree = [x for x in tree if x[2]<(x[3]-np.log(len(tree)))]
+        #tree = [x for x in tree if x[2]<(0.5*x[3])]
+        #ncmax=np.mean(carr)+np.std(carr)
+        #if np.mean(carr)>args.cmax or len(tree)>args.pmax:
+        #if len(tree)>args.pmax:
+        #if (len(tree)>np.square(np.mean(carr))) and (len(tree)>args.prune):
+        if np.mean(carr)>args.prune:
+            tree = [x for x in tree if x[2]<np.max(carr)] # PRUNE PATTERNS WITH MOST FAILED MUTATIONS
+            tree = [x for x in tree if x[0]>np.min(larr)] # PRUNE PATTERNS WITH LOWEST LIFESPAN
+        if args.dup and len(tree)<args.ipool:
+            log('SEED')
+            append_tree() # if pop too low then add new seed pattern to pool
+
+        if len(tree)<=args.prune:
+            log('SEED')
+            append_tree() # add new seed pattern to pool
+        #if len(tree)==0:
+        #    print('EMPTY TREE')
+        #    break
+        # all time high
+        if l>ath:
+            ath = l
+            fn = '{}/ATH_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(args.results,pat.population,int(l),args.seed,n)
+            bb = pat.bounding_box
+            pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0],bb[1]), footer=None, comments=str(args), file_format='rle', save_comments=True)
+            log('ATH')
+        else:
+            log('BEST')
+    else:
+        tree[nodeidx][2]+=1
+
+
+exit()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# initialize root node
+
+def render(pat,pre,post,init=None):
+    if init is not None:
+        for (x0,y0,s) in init:
+            x0 = int(np.around(x0))
+            y0 = int(np.around(y0))
+            xy = [[x0+x,y0+y] for (x,y) in gliders[s]]
+            xy = np.array(xy)
+            pat[xy]|=1
+        
+    for (x0,y0,s) in pre:
+        x0 = int(np.around(x0))
+        y0 = int(np.around(y0))
+        xy = [[x0+x,y0+y] for (x,y) in gliders[s]]
+        xy = np.array(xy)
+        pat[xy]&=0
+
+    for (x0,y0,s) in post:
+        x0 = int(np.around(x0))
+        y0 = int(np.around(y0))
+        xy = [[x0+x,y0+y] for (x,y) in gliders[s]]
+        xy = np.array(xy)
+        pat[xy]|=1
+
 
 np.set_printoptions(linewidth=250)
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -174,33 +452,14 @@ gliders.append(np.array([[1,-1],[-1,0],[1,0],[0,1],[1,1]]))
 gliders.append(np.array([[-1,-1],[0,-1],[1,-1],[1,0],[0,1]]))
 gliders.append(np.array([[0,-1],[-1,0],[-1,1],[0,1],[1,1]]))
 
-def render(pat,pre,post,init=None):
-    if init is not None:
-        for (x0,y0,s) in init:
-            x0 = int(np.around(x0))
-            y0 = int(np.around(y0))
-            xy = [[x0+x,y0+y] for (x,y) in gliders[s]]
-            xy = np.array(xy)
-            pat[xy]|=1
-        
-    for (x0,y0,s) in pre:
-        x0 = int(np.around(x0))
-        y0 = int(np.around(y0))
-        xy = [[x0+x,y0+y] for (x,y) in gliders[s]]
-        xy = np.array(xy)
-        #print('xy.shape',xy.shape)
-        pat[xy]&=0
-        #for (x,y) in gliders[s]:
-        #    pat[x0+x,y0+y]=0
-
-    for (x0,y0,s) in post:
+def render(pat,v):
+    pat=0
+    for (x0,y0,s) in v:
         x0 = int(np.around(x0))
         y0 = int(np.around(y0))
         xy = [[x0+x,y0+y] for (x,y) in gliders[s]]
         xy = np.array(xy)
         pat[xy]|=1
-        #for (x,y) in gliders[s]:
-        #    pat[x0+x,y0+y]=1
 
 # initialize root node
 states=[x for x in range(8)]

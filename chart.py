@@ -41,14 +41,14 @@ life = arr[8]
 lmax = arr[10]
 pop = arr[12]
 m = arr[14]
-#r = arr[16]
+pmax = arr[16]
 node = arr[18]
 back = arr[20]
 leaf = arr[22]
 cmax = arr[24]
 lmean = arr[26]
 rad = arr[34]
-lstd = arr[28]
+uniq = arr[28]
 ltop = arr[30]
 cmean = arr[32]
 r = arr[34]
@@ -76,7 +76,7 @@ ax3 = fig.add_subplot(nplot,1,2,sharex=ax1)
 ##ax11.set_yscale('log')
 #ax2 = fig.add_subplot(3,1,2,sharex=ax1)
 ax4 = fig.add_subplot(nplot,1,3,sharex=ax1)
-ax44 = ax4.twinx()
+#ax44 = ax4.twinx()
 
 #ax5 = fig.add_subplot(nplot,1,4,sharex=ax1)
 #ax55 = ax5.twinx()
@@ -97,11 +97,13 @@ ax44 = ax4.twinx()
 #ax4.set_ylim(auto=True)
 
 alpha = 1.0
+#ax1.scatter(n,pop[0:len(n)],marker='.',color='g',s=0.1,alpha=alpha)
+#ax1.scatter(n,pmax[0:len(n)],marker='.',color='g',s=0.1,alpha=alpha)
+ax1.plot(n,uniq[0:len(n)],'-k',linewidth=1,alpha=0.5)
 #ax5.scatter(n,cmean[0:len(n)],marker='.',color='m',s=0.1,alpha=alpha)
 # ax5.plot(n,cmean[0:len(n)],'-m',linewidth=1,alpha=0.5)
 #ax5.scatter(n,cmax[0:len(n)],marker='.',color='k',s=0.1,alpha=0.2)
 # ax55.plot(n,cmax[0:len(n)],'-k',linewidth=1,alpha=0.5)
-ax1.scatter(n,pop[0:len(n)],marker='.',color='g',s=0.1,alpha=alpha)
 #ax11.scatter(n,rad[0:len(n)],marker='.',color='k',s=0.1,alpha=alpha)
 #ax11.plot(n,sib[0:len(n)],'-k',linewidth=1)
 #ax11.plot(n,r[0:len(n)],'-r',linewidth=1)
@@ -131,9 +133,12 @@ ax3.plot(n, lmean[0:len(n)], '-k', linewidth=1)
 #ax4.plot(n,node[0:len(n)],'-k',linewidth=1)
 #ax4.scatter(n,node[0:len(n)],marker='.',color='r',s=0.1,alpha=alpha)
 ax4.plot(n,node[0:len(n)],'-r',linewidth=1,alpha=0.5)
+ax4.scatter(n,pmax[0:len(n)],marker='.',color='g',s=0.1,alpha=alpha)
 #ax4.scatter(n,pool[0:len(n)],marker='.',color='k',s=0.1,alpha=alpha)
 #ax44.scatter(n,r[0:len(n)],marker='.',color='k',s=0.1,alpha=alpha)
-ax44.plot(n,r[0:len(n)],'-k',linewidth=1,alpha=0.5)
+#ax44.plot(n,uniq[0:len(n)],'-k',linewidth=1,alpha=0.5)
+#ax44.scatter(n,m[0:len(n)],marker='.',color='k',s=0.1,alpha=alpha)
+#ax4.scatter(n,uniq[0:len(n)],marker='.',color='k',s=0.1,alpha=alpha)
 
 #ax3.plot(n, life[0:len(n)], '-b',linewidth=1,alpha=0.5)
 #ax3.plot(n, lmean[0:len(n)], '-k', linewidth=1)
@@ -153,10 +158,10 @@ ax44.plot(n,r[0:len(n)],'-k',linewidth=1,alpha=0.5)
 #ax2.set_xlabel('n')
 ax3.set_xlabel('n')
 ax1.set_xlabel('n')
-ax1.set_ylabel('pop', color='g')
+ax1.set_ylabel('uniq', color='g')
 #ax11.set_ylabel('depth', color='k')
 ax4.set_ylabel('node', color='r')
-ax44.set_ylabel('radius', color='k')
+#ax44.set_ylabel('uniq', color='k')
 #ax1.set_ylabel('uniq', color='g')
 ax3.set_ylabel('life', color='b')
 # ax5.set_ylabel('cmean', color='m')

@@ -1,7 +1,26 @@
 while true
 do
     current_time=$(date "+%Y.%m.%d-%H.%M.%S")
-    unbuffer python3 gliders.py --pool 300 --nseed 1 --treeinit normal --ipop 1 --irad 2.718281828 --rad 2.718281828 --orient --multimut --mut normal --xorthresh 0.5 --memory 50000 --top 1.0 |& tee results/log.$current_time
+    unbuffer python3 gliders.py --mut single --prune 10 --ipool 1 --sidex 384 --spacex 32 --sidey 384 --spacey 192 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut dual --pmin 100 --ipool 1 --sidex 96 --spacex 16 --sidey 96 --spacey 16 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --mut dual --pmin 100 --ipool 1 --sidex 128 --spacex 16 --sidey 128 --spacey 16 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --pmin 1000 --ipool 1 --sidex 128 --spacex 16 --sidey 128 --spacey 16 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --dup --pmin 20 --ipool 1 --sidex 512 --spacex 32 --sidey 512 --spacey 32 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --cmax 7 --pmax 50 --ipool 1 --sidex 128 --spacex 16 --sidey 128 --spacey 16 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --cmax 4 --pmax 100 --ipool 3 --sidex 125 --spacex 25 --sidey 125 --spacey 25 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --dup --ipool 1 --sidex 125 --spacex 25 --sidey 125 --spacey 25 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --dup --ipool 1 --sidex 100 --spacex 25 --sidey 100 --spacey 25 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --ipool 1 --sidex 250 --spacex 50 --sidey 250 --spacey 50 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --ipool 100 --cmax 32 --sidex 250 --spacex 50 --sidey 250 --spacey 50 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --ipool 1 --cmax 100 --sidex 250 --spacex 50 --sidey 250 --spacey 50 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --ipool 100 --cmax 5 --sidex 250 --spacex 50 --sidey 250 --spacey 50 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --ipool 10 --cmax 10 --sidex 1000 --spacex 10 --sidey 700 --spacey 7 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --ipool 1 --cmax 10 --sidex 100 --spacex 10 --sidey 70 --spacey 7 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --ipool 100 --pool 1000 --sidex 25 --spacex 5 --sidey 25 --spacey 5 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --pool 20 --sidex 1500 --spacex 5 --sidey 5 --spacey 5 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --pool 1000 --sidex 100 --spacex 5 --sidey 100 --spacey 5 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --pool 100 --sidex 25 --spacex 5 --sidey 25 --spacey 5 --memory 50000 |& tee results/log.$current_time
+    #unbuffer python3 gliders.py --pool 300 --nseed 1 --treeinit normal --ipop 1 --irad 2.718281828 --rad 2.718281828 --orient --multimut --mut normal --xorthresh 0.5 --memory 50000 --top 1.0 |& tee results/log.$current_time
     #unbuffer python3 gliders.py --pool 100 --nseed 1 --treeinit normal --ipop 3 --irad 0.682689492 --rad 0.682689492 --orient --multimut --mut normal --xorthresh 0.5 --memory 50000 --top 1.0 |& tee results/log.$current_time
     #unbuffer python3 gliders.py --pool 100 --nseed 1 --treeinit normal --ipop 3 --irad 2.718281828 --rad 2.718281828 --orient --multimut --mut normal --xorthresh 0.0 --memory 50000 --top 1.0 |& tee results/log.$current_time
     #unbuffer python3 gliders.py --pool 50 --nseed 7 --treeinit normal --ipop 5 --irad 10 --rad 10 --orient --multimut --mut normal --xorthresh 0.5 --memory 50000 --top 1.0 |& tee results/log.$current_time
