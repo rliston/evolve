@@ -35,26 +35,31 @@ print('loading log file')
 arr = parselog(args.log)
 print('arr',arr.shape)
 
-n=arr[4]
+#n=arr[4]
+n=arr[28] # uniq
+#n = np.arange(len(arr[4]))
 k = arr[6]
 life = arr[8]
-lmax = arr[10]
+lmax = arr[30]
+lmin = arr[34]
 pop = arr[12]
 m = arr[14]
 pmax = arr[16]
 node = arr[18]
-back = arr[20]
+final = arr[20]
 leaf = arr[22]
 cmax = arr[24]
 lmean = arr[26]
-rad = arr[34]
 uniq = arr[28]
 ltop = arr[30]
 cmean = arr[32]
 r = arr[34]
-pool = arr[36]
+#pool = arr[36]
+rad = arr[36]
 
 print(n.shape,n[0:10])
+
+plt.style.use('dark_background')
 
 #fig = plt.figure(figsize=(10,40))
 fig = plt.figure()
@@ -65,20 +70,22 @@ fig = plt.figure()
 #ax4 = fig.add_subplot(4,1,4,sharex=ax1)
 
 #ax1 = fig.add_subplot(1,1,1)
-nplot=3
-ax1 = fig.add_subplot(nplot,1,1)
+nplot=4
+#ax1 = fig.add_subplot(nplot,1,1)
 #ax11 = ax1.twinx()
 #ax11.set_yscale('log')
-ax3 = fig.add_subplot(nplot,1,2,sharex=ax1)
+#ax3 = fig.add_subplot(nplot,1,1,sharex=ax1)
+ax3 = fig.add_subplot(nplot,1,1)
 
 #ax1 = fig.add_subplot(3,1,1)
 #ax11 = ax1.twinx()
 ##ax11.set_yscale('log')
 #ax2 = fig.add_subplot(3,1,2,sharex=ax1)
-ax4 = fig.add_subplot(nplot,1,3,sharex=ax1)
+ax4 = fig.add_subplot(nplot,1,3,sharex=ax3)
 #ax44 = ax4.twinx()
 
-#ax5 = fig.add_subplot(nplot,1,4,sharex=ax1)
+ax5 = fig.add_subplot(nplot,1,2,sharex=ax3)
+ax6 = fig.add_subplot(nplot,1,4,sharex=ax3)
 #ax55 = ax5.twinx()
 
 
@@ -97,9 +104,14 @@ ax4 = fig.add_subplot(nplot,1,3,sharex=ax1)
 #ax4.set_ylim(auto=True)
 
 alpha = 1.0
+size = 1.0
+ax6.scatter(n,final[0:len(n)],marker='.',color='y',s=size,alpha=alpha)
+ax5.plot(n,cmean[0:len(n)],'-r',linewidth=1,alpha=alpha)
+#ax5.scatter(n,rad[0:len(n)],marker='.',color='r',s=size,alpha=alpha)
+#ax5.plot(n,rad[0:len(n)],'-k',linewidth=1,alpha=0.5)
 #ax1.scatter(n,pop[0:len(n)],marker='.',color='g',s=0.1,alpha=alpha)
 #ax1.scatter(n,pmax[0:len(n)],marker='.',color='g',s=0.1,alpha=alpha)
-ax1.plot(n,uniq[0:len(n)],'-k',linewidth=1,alpha=0.5)
+#ax1.plot(n,uniq[0:len(n)],'-k',linewidth=1,alpha=0.5)
 #ax5.scatter(n,cmean[0:len(n)],marker='.',color='m',s=0.1,alpha=alpha)
 # ax5.plot(n,cmean[0:len(n)],'-m',linewidth=1,alpha=0.5)
 #ax5.scatter(n,cmax[0:len(n)],marker='.',color='k',s=0.1,alpha=0.2)
@@ -118,22 +130,24 @@ ax1.plot(n,uniq[0:len(n)],'-k',linewidth=1,alpha=0.5)
 #ax2.plot(n,r[0:len(n)],'-k')
 
 #ax3.scatter(n,life[0:len(n)],marker='.',c=nsamp[0:len(n)],s=0.1)
-ax3.scatter(n,life[0:len(n)],marker='.',color='b',s=0.1,alpha=alpha)
 #ax3.plot(n, lmean[0:len(n)]+lstd[0:len(n)], '-k', linewidth=1)
 #ax3.plot(n, lmax[0:len(n)], '-k', linewidth=1)
 #ax3.scatter(n,lmax[0:len(n)],marker='.',color='k',s=0.1,alpha=alpha)
 #ax3.scatter(n,ltop[0:len(n)],marker='.',color='k',s=0.1,alpha=alpha)
 #ax3.scatter(n,lmean[0:len(n)],marker='.',color='k',s=0.1,alpha=alpha)
-ax3.plot(n, lmean[0:len(n)], '-k', linewidth=1)
+ax3.scatter(n,life[0:len(n)],marker='.',color='g',s=size,alpha=alpha)
+ax3.plot(n, lmean[0:len(n)], '-g', linewidth=1)
+ax3.plot(n, lmin[0:len(n)], '-g', linewidth=0.5)
+ax3.plot(n, lmax[0:len(n)], '-g', linewidth=0.5)
 #ax3.plot(n, ltop[0:len(n)], '-k', linewidth=1)
 #ax3.plot(n, lbot[0:len(n)], '-k', linewidth=1)
 
 #ax4.scatter(n,sib[0:len(n)],marker='.',color='r',s=0.1,alpha=alpha)
 #ax41.plot(n,leaf[0:len(n)],'-k',linewidth=1)
 #ax4.plot(n,node[0:len(n)],'-k',linewidth=1)
-#ax4.scatter(n,node[0:len(n)],marker='.',color='r',s=0.1,alpha=alpha)
-ax4.plot(n,node[0:len(n)],'-r',linewidth=1,alpha=0.5)
-ax4.scatter(n,pmax[0:len(n)],marker='.',color='g',s=0.1,alpha=alpha)
+ax4.scatter(n,pop[0:len(n)],marker='.',color='m',s=size,alpha=alpha)
+#ax4.plot(n,pop[0:len(n)],'-r',linewidth=1,alpha=0.5)
+#ax4.scatter(n,pmax[0:len(n)],marker='.',color='g',s=0.1,alpha=alpha)
 #ax4.scatter(n,pool[0:len(n)],marker='.',color='k',s=0.1,alpha=alpha)
 #ax44.scatter(n,r[0:len(n)],marker='.',color='k',s=0.1,alpha=alpha)
 #ax44.plot(n,uniq[0:len(n)],'-k',linewidth=1,alpha=0.5)
@@ -157,14 +171,15 @@ ax4.scatter(n,pmax[0:len(n)],marker='.',color='g',s=0.1,alpha=alpha)
 
 #ax2.set_xlabel('n')
 ax3.set_xlabel('n')
-ax1.set_xlabel('n')
-ax1.set_ylabel('uniq', color='g')
+#ax1.set_xlabel('n')
+#ax1.set_ylabel('uniq', color='g')
 #ax11.set_ylabel('depth', color='k')
-ax4.set_ylabel('node', color='r')
+ax4.set_ylabel('pop', color='m')
 #ax44.set_ylabel('uniq', color='k')
 #ax1.set_ylabel('uniq', color='g')
-ax3.set_ylabel('life', color='b')
-# ax5.set_ylabel('cmean', color='m')
+ax3.set_ylabel('life', color='g')
+ax5.set_ylabel('cmean', color='r')
+ax6.set_ylabel('final', color='y')
 # ax55.set_ylabel('cmax', color='k')
 #ax2.set_ylabel('population', color='r')
 #ax4.set_ylabel('sample', color='r')
@@ -344,7 +359,7 @@ ax3.plot(n, lmax[0:len(n)], '-k', linewidth=1)
 
 ax4.scatter(n,sib[0:len(n)],marker='.',color='r',s=0.1,alpha=alpha)
 #ax41.plot(n,leaf[0:len(n)],'-k',linewidth=1)
-ax41.plot(n,node[0:len(n)],'-k',linewidth=1)
+ax41.plot(n,pop[0:len(n)],'-k',linewidth=1)
 
 #ax3.plot(n, life[0:len(n)], '-b',linewidth=1,alpha=0.5)
 #ax3.plot(n, lmean[0:len(n)], '-k', linewidth=1)
@@ -406,8 +421,8 @@ plt.ylim(ys,1.0)
 plt.gca().set_yticks(np.arange(ys,1.0,0.1)) # major
 plt.gca().set_yticks(np.arange(ys,1.0,0.01),minor=True)
 plt.gca().set_xticks(np.arange(0,xmax,1000000))
-plt.grid(True, which='major', axis='y', color='k', linestyle='-', linewidth=1)
-plt.grid(True, which='minor', axis='y', color='k', linestyle='--', linewidth=0.5)
+plt.grid(True, which='major', axis='y', color='grey', linestyle='-', linewidth=1)
+plt.grid(True, which='minor', axis='y', color='grey', linestyle='--', linewidth=0.5)
 
 plt.plot(d0[:,0],d0[:,1],label='noise+raw_sc',linewidth=2)
 plt.plot(d1[:,0],d1[:,1],label='noise+ref_sc',linewidth=2)
