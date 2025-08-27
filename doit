@@ -1,5 +1,5 @@
 #!/bin/bash
-unbuffer python3 gliders.py --checkpoint 300 --pihep --spacex 3 --spacey 3 --nspark 100 --prune 100 --memory 50000
+unbuffer python3 gliders.py --checkpoint 300 --pihep --spacex 3 --spacey 3 --nspark 300 --prune 300 --memory 130000
 #unbuffer python3 gliders.py --rad 15 --checkpoint 300 --pihep --spacex 3 --spacey 3 --nspark 20 --prune 20 --memory 50000
 #unbuffer python3 gliders.py --rad 1 --sample uniform --best --pihep --spacex 3 --spacey 3 --nspark 1 --prune 1 --memory 50000
 #unbuffer python3 gliders.py --rad 12 --sample uniform --checkpoint 300 --pihep --spacex 3 --spacey 3 --nspark 100 --prune 100 --memory 50000

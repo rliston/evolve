@@ -352,7 +352,7 @@ n1=0
 ath=0
 lmax0=None
 m=0
-#prune = args.prune
+prune = args.prune
 pat=lt.pattern()
 nbest=0
 #rad = args.irad
@@ -463,9 +463,10 @@ while True:
             #dy = np.floor(np.random.normal(0,rad))
             #dx = random.choice([-int(rad),-1,0,1,int(rad)])
             #dy = random.choice([-int(rad),-1,0,1,int(rad)])
-            dx = random.choice([-7,-3,-1,0,1,3,7])
-            #dy = random.choice([-7,-3,-1,0,1,3,7])
-            dy=0
+            #dx = random.choice([-31,-15,-7,-3,-1,0,1,3,7,15,31])
+            #dy = random.choice([-31,-15,-7,-3,-1,0,1,3,7,15,31])
+            dx = random.choice([-16,-1,1,16])
+            dy = random.choice([-16,-1,1,16])
             imut[(int(key[0]+dx),int(key[1]+dy))] = random.choice(states)
 
 #        if len(imut)==0:
@@ -624,7 +625,8 @@ while True:
         tree.append([l,imut,0])
         # prune
         #prune = args.squeeze*(args.prune+np.mean(carr))
-        prune = max(np.mean(carr), args.prune)
+        #prune = max(np.mean(carr), args.prune)
+
         while len(tree)>prune:
             tree.sort(key=lambda x: -x[2]) # PRUNE PATTERNS WITH MOST FAILED MUTATIONS
             tree = tree[1:]
