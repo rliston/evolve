@@ -138,16 +138,20 @@ def _pool_remove(nid):
 
 
 def _pool_prune(prune_limit):
+    if not args.prune_lmin and not args.prune_cmax:
+        return
     nodes = list(pool.values())
     while len(pool) > prune_limit:
-        worst = max(nodes, key=lambda nd: nd.failures)
-        _pool_remove(worst.nid)
-        nodes = list(pool.values())
-        if len(pool) <= prune_limit:
-            break
-        worst = min(nodes, key=lambda nd: nd.lifespan)
-        _pool_remove(worst.nid)
-        nodes = list(pool.values())
+        if args.prune_cmax:
+            worst = max(nodes, key=lambda nd: nd.failures)
+            _pool_remove(worst.nid)
+            nodes = list(pool.values())
+            if len(pool) <= prune_limit:
+                break
+        if args.prune_lmin:
+            worst = min(nodes, key=lambda nd: nd.lifespan)
+            _pool_remove(worst.nid)
+            nodes = list(pool.values())
 
 
 # ---------------------------------------------------------------------------
@@ -246,6 +250,10 @@ parser.add_argument('--dup',        default=False, action='store_true')
 parser.add_argument('--reseed',     default=False, action='store_true')
 parser.add_argument('--ipool',      help='minimum samples before pruning', default=100, type=int)
 parser.add_argument('--prune',      help='prune threshold', default=20, type=float)
+parser.add_argument('--prune_lmin', help='prune lowest-lifespan node when pool exceeds --prune',
+                    default=False, action='store_true')
+parser.add_argument('--prune_cmax', help='prune highest-failure-count node when pool exceeds --prune',
+                    default=False, action='store_true')
 parser.add_argument('--rad',        help='gaussian radius', default=0, type=float)
 parser.add_argument('--n',          help='gaussian gliders', default=10, type=int)
 parser.add_argument('--spacex',     help='grid spacing', default=10, type=int)
