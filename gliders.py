@@ -570,6 +570,11 @@ else:
                 _pool_add(lv, vec)
                 break
 
+# Initialise lmax0 to the pool's current best so the main loop only fires
+# LMAX when the pool max actually increases beyond what seeding already found.
+if pool:
+    lmax0 = max(nd.lifespan for nd in pool.values())
+
 
 # ---------------------------------------------------------------------------
 # Main evolutionary loop
@@ -651,22 +656,25 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
         _log_depth = pool[new_nid].depth
         _pool_prune(int(prune))
 
-        # lmax pool update tracking
+        # lmax pool update: fire only when pool max strictly increases.
+        # Use a separate pattern object so pat (current mutation) is not clobbered.
         nodes = list(pool.values())
         cur_pool_max = max(nd.lifespan for nd in nodes)
-        if lmax0 is None or cur_pool_max != lmax0:
+        if lmax0 is not None and cur_pool_max > lmax0:
             lmax0 = cur_pool_max
             best_node = max(nodes, key=lambda nd: nd.lifespan)
-            render(pat, best_node.vec)
-            bb = pat.bounding_box
-            if bb is not None:
+            lmax_pat = lt.pattern()
+            render(lmax_pat, best_node.vec)
+            bb_lmax = lmax_pat.bounding_box
+            if bb_lmax is not None:
                 fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
-                    args.results, pat.population, int(lmax0), args.seed, n)
-                pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
-                               footer=None, comments=str(args), file_format='rle',
-                               save_comments=True)
+                    args.results, lmax_pat.population, int(lmax0), args.seed, n)
+                lmax_pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb_lmax[0], bb_lmax[1]),
+                                    footer=None, comments=str(args), file_format='rle',
+                                    save_comments=True)
             log('LMAX')
 
+        # pat still holds the current mutation (rendered at top of _process_result)
         bb = pat.bounding_box
         if l > ath:
             ath = l
