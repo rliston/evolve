@@ -582,17 +582,17 @@ else:
 # ATH log entries and files are written (avoids ath < lmax in early log lines).
 if pool:
     lmax0 = max(nd.lifespan for nd in pool.values())
+    best_seed = max(pool.values(), key=lambda nd: nd.lifespan)
+    render(pat, best_seed.vec)
+    bb = pat.bounding_box
     if not args.load:
         ath = lmax0
-        best_seed = max(pool.values(), key=lambda nd: nd.lifespan)
-        render(pat, best_seed.vec)
-        bb = pat.bounding_box
-        if bb is not None:
-            fn = '{}/ATH_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
-                args.results, pat.population, int(ath), args.seed, 0)
-            pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
-                          footer=None, comments=str(args), file_format='rle',
-                          save_comments=True)
+    if bb is not None:
+        fn = '{}/ATH_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
+            args.results, pat.population, int(ath), args.seed, 0)
+        pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
+                      footer=None, comments=str(args), file_format='rle',
+                      save_comments=True)
 
 
 # ---------------------------------------------------------------------------
@@ -803,8 +803,9 @@ try:
                     _submit_one()
 
 except KeyboardInterrupt:
-    print('\nSTOPPING')
+    print('\nSTOPPING', flush=True)
     if args.chkpt_save:
         save_checkpoint(args.chkpt_save,
                         {'n': n, 'ath': ath, 'lmax0': lmax0, 'uniq_count': len(uniq)})
-    exit()
+    logf.flush()
+    os._exit(0)  # bypass ProcessPoolExecutor.__exit__(wait=True) which blocks on in-flight workers
