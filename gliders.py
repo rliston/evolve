@@ -146,8 +146,6 @@ def _pool_prune(prune_limit):
             worst = max(nodes, key=lambda nd: nd.failures)
             _pool_remove(worst.nid)
             nodes = list(pool.values())
-            if len(pool) <= prune_limit:
-                break
         if args.prune_lmin:
             worst = min(nodes, key=lambda nd: nd.lifespan)
             _pool_remove(worst.nid)
