@@ -1,5 +1,40 @@
 #!/bin/bash
-unbuffer python3 gliders.py --checkpoint 300 --pihep --spacex 3 --spacey 3 --nspark 300 --prune 300 --memory 130000
+python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --nspark 100 --irad 1 --ispark 3 --rad 5 --prune 10000 --memory 40000 --nworkers 10 --chkpt_save results/checkpoint.pkl --chkpt_interval 1800
+python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --nspark 100 --irad 1 --ispark 3 --rad 5 --prune 10000 --memory 40000
+#python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --rleinit ./r15 --rad 5 --prune 10000 --memory 40000
+#python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --nspark 100 --irad 1 --ispark 3 --rad 5 --prune 1000 --memory 40000
+#python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --nspark 100 --irad 2 --prune 1000 --memory 40000
+#python3 gliders.py --checkpoint 300 --p16 --spacex 9 --spacey 9 --nspark 10 --irad 8 --prune 100 --memory 40000
+#python3 gliders.py --checkpoint 300 --p16 --glider --blank --spacex 10 --spacey 10 --nspark 10 --irad 8 --prune 100 --memory 40000
+#python3 gliders.py --checkpoint 300 --glider --p16 --spacex 9 --spacey 9 --radalgo pi --nspark 10 --irad 3 --ispark 3 --prune 20 --memory 40000
+#python3 gliders.py --checkpoint 300 --p16 --spacex 12 --spacey 12 --nspark 10 --irad 3 --ispark 4 --prune 100 --memory 40000
+#python3 gliders.py --checkpoint 300 --figeight --rad 4 --spacex 9 --spacey 9 --nspark 10 --irad 2 --ispark 3 --prune 100 --memory 40000
+#python3 gliders.py --checkpoint 300 --figeight --rad 3 --spacex 9 --spacey 9 --nspark 10 --irad 3 --ispark 3 --prune 50 --memory 40000
+#python3 gliders.py --checkpoint 300 --feight --blank --rad 30 --spacex 9 --spacey 9 --nspark 10 --irad 3 --ispark 3 --prune 20 --memory 40000
+#python3 gliders.py --checkpoint 300 --bigblock --blank --rad 10 --spacex 3 --spacey 3 --nspark 100 --irad 3 --ispark 3 --prune 1000 --memory 40000
+#python3 gliders.py --checkpoint 300 --bigblock --block  --blank --rad 10 --spacex 3 --spacey 3 --nspark 10 --irad 3 --ispark 3 --prune 100 --memory 40000
+#python3 gliders.py --checkpoint 300 --glider --bigblock --blinker --block  --rad 10 --spacex 3 --spacey 3 --nspark 10 --irad 3 --ispark 20 --prune 30 --memory 40000 --delete
+#python3 gliders.py --checkpoint 300 --glider --traffic --bigblock --rad 10 --spacex 18 --spacey 18 --nspark 100 --irad 3 --ispark 25 --prune 300 --memory 40000 --delete
+#python3 gliders.py --checkpoint 300 --glider --traffic --rad 3 --spacex 9 --spacey 9 --nspark 100 --irad 3 --ispark 3 --prune 300 --memory 40000 --delete
+#python3 gliders.py --checkpoint 300 --glider --traffic --rad 10 --spacex 9 --spacey 9 --nspark 100 --irad 3 --ispark 3 --prune 300 --memory 40000 --delete
+#python3 gliders.py --checkpoint 300 --glider --rad 10 --spacex 3 --spacey 3 --nspark 100 --irad 3 --ispark 3 --prune 300 --memory 40000 --delete
+#python3 gliders.py --checkpoint 300 --glider --rad 30 --spacex 3 --spacey 3 --nspark 100 --irad 3 --ispark 3 --prune 300 --memory 40000 --delete
+#python3 gliders.py --checkpoint 300 --glider --rad 50 --spacex 3 --spacey 3 --nspark 100 --irad 3 --ispark 3 --prune 100 --memory 40000 --delete
+#python3 gliders.py --checkpoint 300 --glider --rad 50 --spacex 3 --spacey 3 --nspark 100 --irad 3 --ispark 3 --prune 100 --memory 40000
+#python3 gliders.py --checkpoint 300 --glider --rad 20 --spacex 3 --spacey 3 --nspark 100 --prune 100 --memory 40000
+#python3 gliders.py --checkpoint 300 --glider --rad 3 --spacex 3 --spacey 3 --nspark 100 --prune 100 --memory 40000
+#python3 gliders.py --checkpoint 300 --glider --rad 15 --spacex 3 --spacey 3 --nspark 100 --prune 100 --memory 40000 --delete
+#python3 gliders.py --checkpoint 300 --glider --rad 15 --spacex 3 --spacey 3 --nspark 30 --prune 1000 --memory 40000 --delete --weighted
+#python3 gliders.py --checkpoint 300 --glider --rad 20 --spacex 3 --spacey 3 --nspark 1 --prune 100 --memory 40000
+#python3 gliders.py --checkpoint 300 --block --rad 5 --spacex 3 --spacey 3 --nspark 20 --prune 20 --memory 50000
+#python3 gliders.py --checkpoint 300 --block --rad 1 --spacex 3 --spacey 3 --nspark 100 --prune 100 --memory 50000
+#python3 gliders.py --checkpoint 300 --block --rad 1 --spacex 3 --spacey 3 --nspark 20 --prune 20 --memory 50000
+#python3 gliders.py --checkpoint 300 --block --rad 1 --spacex 7 --spacey 3 --nspark 20 --prune 20 --memory 50000
+#python3 gliders.py --checkpoint 300 --glider --block --rad 1 --spacex 7 --spacey 3 --nspark 20 --prune 20 --memory 50000
+#python3 gliders.py --checkpoint 300 --glider --block --rad 1 --spacex 7 --spacey 7 --nspark 20 --prune 20 --memory 50000
+#python3 gliders.py --checkpoint 300 --glider --block --rad 2 --spacex 7 --spacey 7 --nspark 100 --prune 100 --memory 50000
+#python3 gliders.py --checkpoint 300 --pihep --rpent --rad 2 --spacex 7 --spacey 7 --nspark 100 --prune 100 --memory 50000
+#python3 gliders.py --checkpoint 300 --pihep --rpent --bigblock --bipolar 1 --spacex 3 --spacey 3 --nspark 10000 --prune 10000 --memory 50000
 #unbuffer python3 gliders.py --rad 15 --checkpoint 300 --pihep --spacex 3 --spacey 3 --nspark 20 --prune 20 --memory 50000
 #unbuffer python3 gliders.py --rad 1 --sample uniform --best --pihep --spacex 3 --spacey 3 --nspark 1 --prune 1 --memory 50000
 #unbuffer python3 gliders.py --rad 12 --sample uniform --checkpoint 300 --pihep --spacex 3 --spacey 3 --nspark 100 --prune 100 --memory 50000
