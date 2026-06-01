@@ -634,7 +634,8 @@ def _make_mutation(node):
             del imut_vec[key]
         else:
             dx = np.random.normal(0, rad)
-            dy = np.random.normal(0, rad)
+            #dy = np.random.normal(0, rad)
+            dy = np.random.normal(0, 0) # TEST
             imut_vec[(int(dx), int(dy))] = random.choice(states)
 
     return (imut_base, imut_vec) if imut_base is not None else imut_vec, action
@@ -668,14 +669,22 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
         _log_depth = pool[new_nid].depth
         _pool_prune(int(prune))
 
-        # Update global pool-max sentinel used for checkpointing.
+        # Write lmax file only when the global pool max strictly increases
+        # (i.e. when the lmax column in the log changes value).
         nodes = list(pool.values())
         cur_pool_max = max(nd.lifespan for nd in nodes)
+        bb = pat.bounding_box
         if lmax0 is not None and cur_pool_max > lmax0:
             lmax0 = cur_pool_max
+            if bb is not None:
+                fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
+                    args.results, pat.population, int(l), args.seed, n)
+                pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
+                               footer=None, comments=str(args), file_format='rle',
+                               save_comments=True)
+            log('LMAX')
 
         # pat still holds the current mutation (rendered at top of _process_result)
-        bb = pat.bounding_box
         if l > ath:
             ath = l
             if bb is not None:
@@ -686,13 +695,7 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
                                save_comments=True)
             log('ATH')
         else:
-            if bb is not None:
-                fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
-                    args.results, pat.population, int(l), args.seed, n)
-                pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
-                               footer=None, comments=str(args), file_format='rle',
-                               save_comments=True)
-            log('LMAX')
+            log('BEST')
 
     else:
         if action != 'del' and parent_nid in pool:
