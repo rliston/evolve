@@ -518,6 +518,7 @@ ath    = 0
 lmax0  = None
 m      = 0
 prune  = args.prune
+ntime  = time.time()
 lprev  = 0
 pop    = 0
 l      = 0
@@ -642,7 +643,7 @@ def _make_mutation(node):
 
 
 def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lmax, action):
-    global n, n0, n1, ath, lmax0, pat, prune, lprev, l, pop, _log_pop, _log_depth, last_chkpt, linear_patterns
+    global n, n0, n1, ath, lmax0, pat, prune, lprev, l, pop, _log_pop, _log_depth, last_chkpt, linear_patterns, ntime
 
     n    += 1
     l     = l_res
@@ -695,6 +696,15 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
                                save_comments=True)
             log('ATH')
         else:
+            nt0 = time.time()
+            if args.best or (nt0 - ntime) > args.checkpoint:
+                ntime = nt0
+                if bb is not None:
+                    fn = '{}/BEST_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
+                        args.results, pat.population, int(l), args.seed, n)
+                    pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
+                                   footer=None, comments=str(args), file_format='rle',
+                                   save_comments=True)
             log('BEST')
 
     else:
