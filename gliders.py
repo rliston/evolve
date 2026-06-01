@@ -190,7 +190,7 @@ def save_checkpoint(path, state):
 
 
 def load_checkpoint(path):
-    global pool, _next_nid
+    global pool, _next_nid, linear_patterns
     with open(path, 'rb') as f:
         data = pickle.load(f)
     pool.clear()
@@ -200,7 +200,9 @@ def load_checkpoint(path):
         node.children = list(nd['children'])
         pool[nd['nid']] = node
     _next_nid = data['next_nid']
-    print('CHKPT  loaded {} nodes next_nid={}'.format(len(pool), _next_nid), flush=True)
+    linear_patterns = data.get('linear_patterns', [])
+    print('CHKPT  loaded {} nodes next_nid={} linear={}'.format(
+        len(pool), _next_nid, len(linear_patterns)), flush=True)
     return data
 
 
@@ -516,8 +518,6 @@ ath    = 0
 lmax0  = None
 m      = 0
 prune  = args.prune
-nbest  = 0
-ntime  = time.time()
 lprev  = 0
 pop    = 0
 l      = 0
@@ -525,16 +525,18 @@ rad    = args.rad
 _log_pop   = 0
 _log_depth = 0
 last_chkpt = time.time()
+linear_patterns = []   # accumulated across run, saved in checkpoint
 
 if args.load:
     # ---- resume from checkpoint ----
     ck = load_checkpoint(args.load)
-    n      = ck.get('n', 0)
-    ath    = ck.get('ath', 0)
-    lmax0  = ck.get('lmax0', None)
-    uniq   = [True] * ck.get('uniq_count', 0)
+    n               = ck.get('n', 0)
+    ath             = ck.get('ath', 0)
+    lmax0           = ck.get('lmax0', None)
+    uniq            = [True] * ck.get('uniq_count', 0)
+    linear_patterns = ck.get('linear_patterns', [])
     n0 = n1 = 0
-    print('Resumed: n={} ath={} pool_size={}'.format(n, ath, len(pool)))
+    print('Resumed: n={} ath={} pool_size={} linear={}'.format(n, ath, len(pool), len(linear_patterns)))
 else:
     # ---- build initial pool from scratch ----
     if args.rleinit:
@@ -639,7 +641,7 @@ def _make_mutation(node):
 
 
 def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lmax, action):
-    global n, n0, n1, ath, lmax0, nbest, ntime, pat, prune, lprev, l, pop, _log_pop, _log_depth, last_chkpt
+    global n, n0, n1, ath, lmax0, pat, prune, lprev, l, pop, _log_pop, _log_depth, last_chkpt, linear_patterns
 
     n    += 1
     l     = l_res
@@ -655,17 +657,8 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
             pool[parent_nid].failures += 1
         if rle_str is not None and rle_bb is not None:
             gen_approx = int(max(0, parent_lmax) + 150000)
-            fn = '{}/linear_L{:09d}_seed{:09d}_n{:09d}.rle'.format(
-                args.results, gen_approx, args.seed, n)
-            with open(fn, 'w') as f:
-                f.write('#CXRLE Pos={},{}\n'.format(rle_bb[0], rle_bb[1]))
-                f.write(rle_str)
+            linear_patterns.append({'gen': gen_approx, 'rle': rle_str, 'bb': rle_bb, 'n': n})
         log('LINEAR')
-
-    elif l == -1:
-        if parent_nid in pool:
-            pool[parent_nid].failures += 1
-        log('EXCEPTION')
 
     elif l > parent_lmax:
         lprev = parent_lmax
@@ -675,23 +668,11 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
         _log_depth = pool[new_nid].depth
         _pool_prune(int(prune))
 
-        # lmax pool update: fire only when pool max strictly increases.
-        # Use a separate pattern object so pat (current mutation) is not clobbered.
+        # Update global pool-max sentinel used for checkpointing.
         nodes = list(pool.values())
         cur_pool_max = max(nd.lifespan for nd in nodes)
         if lmax0 is not None and cur_pool_max > lmax0:
             lmax0 = cur_pool_max
-            best_node = max(nodes, key=lambda nd: nd.lifespan)
-            lmax_pat = lt.pattern()
-            render(lmax_pat, best_node.vec)
-            bb_lmax = lmax_pat.bounding_box
-            if bb_lmax is not None:
-                fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
-                    args.results, lmax_pat.population, int(lmax0), args.seed, n)
-                lmax_pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb_lmax[0], bb_lmax[1]),
-                                    footer=None, comments=str(args), file_format='rle',
-                                    save_comments=True)
-            log('LMAX')
 
         # pat still holds the current mutation (rendered at top of _process_result)
         bb = pat.bounding_box
@@ -705,17 +686,13 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
                                save_comments=True)
             log('ATH')
         else:
-            nbest += 1
-            nt0 = time.time()
-            if args.best or (nt0 - ntime) > args.checkpoint:
-                ntime = nt0
-                if bb is not None:
-                    fn = '{}/BEST_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
-                        args.results, pat.population, int(l), args.seed, n)
-                    pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
-                                   footer=None, comments=str(args), file_format='rle',
-                                   save_comments=True)
-            log('BEST')
+            if bb is not None:
+                fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
+                    args.results, pat.population, int(l), args.seed, n)
+                pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
+                               footer=None, comments=str(args), file_format='rle',
+                               save_comments=True)
+            log('LMAX')
 
     else:
         if action != 'del' and parent_nid in pool:
@@ -727,7 +704,9 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
         if now - last_chkpt >= args.chkpt_interval:
             last_chkpt = now
             save_checkpoint(args.chkpt_save, {
-                'n': n, 'ath': ath, 'lmax0': lmax0, 'uniq_count': len(uniq)})
+                'n': n, 'ath': ath, 'lmax0': lmax0, 'uniq_count': len(uniq),
+                'linear_patterns': linear_patterns})
+            log('CHECKPOINT')
 
 
 try:
@@ -806,6 +785,7 @@ except KeyboardInterrupt:
     print('\nSTOPPING', flush=True)
     if args.chkpt_save:
         save_checkpoint(args.chkpt_save,
-                        {'n': n, 'ath': ath, 'lmax0': lmax0, 'uniq_count': len(uniq)})
+                        {'n': n, 'ath': ath, 'lmax0': lmax0, 'uniq_count': len(uniq),
+                         'linear_patterns': linear_patterns})
     logf.flush()
     os._exit(0)  # bypass ProcessPoolExecutor.__exit__(wait=True) which blocks on in-flight workers
