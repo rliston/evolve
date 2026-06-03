@@ -2,13 +2,24 @@ import argparse
 import random
 import datetime
 import time
-import numpy as np ; print('numpy ' + np.__version__)
-import lifelib ; print('lifelib',lifelib.__version__)
 import os
+import sys
 import glob
 import re
 import pickle
 from concurrent.futures import ProcessPoolExecutor, as_completed
+
+# Redirect C-level fd 2 to /dev/null so lifelib's GC messages (std::cerr) are
+# suppressed.  sys.stderr is re-pointed at the original terminal fd so Python
+# tracebacks still reach the terminal.
+_real_stderr_fd = os.dup(2)
+_devnull_fd = os.open(os.devnull, os.O_WRONLY)
+os.dup2(_devnull_fd, 2)
+os.close(_devnull_fd)
+sys.stderr = os.fdopen(_real_stderr_fd, 'w', buffering=1)
+
+import numpy as np ; print('numpy ' + np.__version__)
+import lifelib ; print('lifelib',lifelib.__version__)
 
 np.set_printoptions(linewidth=250)
 
@@ -635,8 +646,7 @@ def _make_mutation(node):
             del imut_vec[key]
         else:
             dx = np.random.normal(0, rad)
-            #dy = np.random.normal(0, rad)
-            dy = np.random.normal(0, 0) # TEST
+            dy = np.random.normal(0, rad)
             imut_vec[(int(dx), int(dy))] = random.choice(states)
 
     return (imut_base, imut_vec) if imut_base is not None else imut_vec, action
