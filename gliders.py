@@ -680,23 +680,36 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
         _log_depth = pool[new_nid].depth
         _pool_prune(int(prune))
 
-        # Write lmax file whenever the pool max strictly increases.
-        # lmax0 is always synced to the actual pool max after add+prune so that
-        # pruning a high node (which lowers the pool max) is reflected: a later
-        # node that beats the reduced pool max correctly triggers LMAX.
+        # Write lmax file whenever the pool max changes (up or down).
+        # Increase: current mutant is the new best — use pat directly.
+        # Decrease: prune_cmax evicted the previous best — render the new best node.
         nodes = list(pool.values())
         cur_pool_max = max(nd.lifespan for nd in nodes) if nodes else 0
         bb = pat.bounding_box
-        if lmax0 is not None and cur_pool_max > lmax0:
-            if bb is not None:
-                fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
-                    args.results, pat.population, int(l), args.seed, n)
-                pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
-                               footer=None, comments=str(args), file_format='rle',
-                               save_comments=True)
+        if lmax0 is not None and cur_pool_max != lmax0:
+            increased = cur_pool_max > lmax0
+            lmax0 = cur_pool_max
+            if increased:
+                # increase: pat IS the new best
+                if bb is not None:
+                    fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
+                        args.results, pat.population, int(l), args.seed, n)
+                    pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
+                                   footer=None, comments=str(args), file_format='rle',
+                                   save_comments=True)
+            else:
+                # decrease: render the current pool best explicitly
+                best_node = max(nodes, key=lambda nd: nd.lifespan)
+                lmax_pat = lt.pattern()
+                render(lmax_pat, best_node.vec)
+                bb_lm = lmax_pat.bounding_box
+                if bb_lm is not None:
+                    fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
+                        args.results, lmax_pat.population, int(cur_pool_max), args.seed, n)
+                    lmax_pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb_lm[0], bb_lm[1]),
+                                        footer=None, comments=str(args), file_format='rle',
+                                        save_comments=True)
             log('LMAX')
-        if nodes:
-            lmax0 = cur_pool_max  # sync down too, so pruning a high node is reflected
 
         # pat still holds the current mutation (rendered at top of _process_result)
         if l > ath:
