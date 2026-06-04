@@ -680,13 +680,14 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
         _log_depth = pool[new_nid].depth
         _pool_prune(int(prune))
 
-        # Write lmax file only when the global pool max strictly increases
-        # (i.e. when the lmax column in the log changes value).
+        # Write lmax file whenever the pool max strictly increases.
+        # lmax0 is always synced to the actual pool max after add+prune so that
+        # pruning a high node (which lowers the pool max) is reflected: a later
+        # node that beats the reduced pool max correctly triggers LMAX.
         nodes = list(pool.values())
-        cur_pool_max = max(nd.lifespan for nd in nodes)
+        cur_pool_max = max(nd.lifespan for nd in nodes) if nodes else 0
         bb = pat.bounding_box
         if lmax0 is not None and cur_pool_max > lmax0:
-            lmax0 = cur_pool_max
             if bb is not None:
                 fn = '{}/lmax_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
                     args.results, pat.population, int(l), args.seed, n)
@@ -694,6 +695,8 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
                                footer=None, comments=str(args), file_format='rle',
                                save_comments=True)
             log('LMAX')
+        if nodes:
+            lmax0 = cur_pool_max  # sync down too, so pruning a high node is reflected
 
         # pat still holds the current mutation (rendered at top of _process_result)
         if l > ath:
