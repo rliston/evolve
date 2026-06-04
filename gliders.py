@@ -266,6 +266,7 @@ parser.add_argument('--prune_lmin', help='prune lowest-lifespan node when pool e
 parser.add_argument('--prune_cmax', help='prune highest-failure-count node when pool exceeds --prune',
                     default=False, action='store_true')
 parser.add_argument('--rad',        help='gaussian radius', default=0, type=float)
+parser.add_argument('--brownian',   help='treat dx/dy as delta from current position', default=False, action='store_true')
 parser.add_argument('--n',          help='gaussian gliders', default=10, type=int)
 parser.add_argument('--spacex',     help='grid spacing', default=10, type=int)
 parser.add_argument('--spacey',     help='grid spacing', default=10, type=int)
@@ -578,8 +579,8 @@ else:
                     vec[(np.floor(np.random.uniform(-args.irad, args.irad)),
                          np.floor(np.random.uniform(-args.irad, args.irad)))] = random.choice(states)
                 lv, pv, _, _ = _eval_inline(vec, 0)
-                if lv <= 0:
-                    continue
+                #if lv <= 0:
+                #    continue
                 bb = pat.bounding_box
                 if k < 10 and bb is not None:
                     fn = '{}/init_K{:06d}_seed{:09d}.rle'.format(args.results, k, args.seed)
@@ -647,6 +648,10 @@ def _make_mutation(node):
         else:
             dx = np.random.normal(0, rad)
             dy = np.random.normal(0, rad)
+            if args.brownian and imut_vec:
+                ox, oy = random.choice(list(imut_vec.keys()))
+                dx += ox
+                dy += oy
             imut_vec[(int(dx), int(dy))] = random.choice(states)
 
     return (imut_base, imut_vec) if imut_base is not None else imut_vec, action

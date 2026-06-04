@@ -1,5 +1,8 @@
 #!/bin/bash
-python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --nspark 1 --irad 1 --ispark 3 --rad 3 --prune 1000 --prune_lmin --prune_cmax --memory 40000 --nworkers 6 --chkpt_save checkpoint.pickle --chkpt_interval 1800
+python3 gliders.py --checkpoint 300 --blank --p16 --spacex 11 --spacey 11 --nspark 1 --irad 1 --ispark 1 --rad 1 --prune 1000 --prune_lmin --prune_cmax --memory 40000 --nworkers 6 --chkpt_save checkpoint.pickle --chkpt_interval 1800 --brownian
+#python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --nspark 100 --irad 1 --ispark 3 --rad 1 --prune 1000 --prune_lmin --prune_cmax --memory 40000 --nworkers 6 --chkpt_save checkpoint.pickle --chkpt_interval 1800
+#python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --nspark 1 --irad 1 --ispark 3 --rad 1 --prune 1000 --prune_lmin --prune_cmax --memory 40000 --nworkers 6 --chkpt_save checkpoint.pickle --chkpt_interval 1800 --load checkpoint.pickle
+#python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --nspark 1 --irad 1 --ispark 3 --rad 3 --prune 1000 --prune_lmin --prune_cmax --memory 40000 --nworkers 6 --chkpt_save checkpoint.pickle --chkpt_interval 1800
 #python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --nspark 100 --irad 1 --ispark 3 --rad 5 --prune 10000 --prune_lmin --prune_cmax --memory 40000 --nworkers 6 --chkpt_save checkpoint.pickle --chkpt_interval 1800 --load checkpoint.pickle
 #python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --nspark 100 --irad 1 --ispark 3 --rad 5 --prune 10000 --memory 40000
 #python3 gliders.py --checkpoint 300 --blank --p16 --spacex 9 --spacey 9 --rleinit ./r15 --rad 5 --prune 10000 --memory 40000
