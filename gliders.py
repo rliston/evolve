@@ -52,6 +52,38 @@ def _mem_avail_mb():
     return mi.get('MemAvailable')
 
 
+def _find_other_gliders():
+    """Return [(pid, cmdline), ...] for other running gliders.py processes
+    (mains *or* workers).  Used by the startup stale-run check so a forgotten /
+    hung run can't quietly compete for RAM and drive the box into swap death."""
+    me     = os.getpid()
+    others = []
+    try:
+        for pid_s in os.listdir('/proc'):
+            if not pid_s.isdigit():
+                continue
+            pid = int(pid_s)
+            if pid == me:
+                continue
+            try:
+                with open('/proc/{}/cmdline'.format(pid), 'rb') as f:
+                    raw = f.read()
+            except Exception:
+                continue
+            argv = [a.decode('utf-8', 'replace') for a in raw.split(b'\x00') if a]
+            if not argv:
+                continue
+            # Require argv[0] to be a python interpreter AND 'gliders.py' to be an
+            # actual argument, so shell wrappers / editors / greps whose command
+            # line merely *mentions* gliders.py are not false positives.
+            exe = os.path.basename(argv[0])
+            if 'python' in exe and any(os.path.basename(a) == 'gliders.py' for a in argv[1:]):
+                others.append((pid, ' '.join(argv)))
+    except Exception:
+        pass
+    return others
+
+
 # ---------------------------------------------------------------------------
 # Module-level worker state — populated by _worker_init in each subprocess
 # ---------------------------------------------------------------------------
@@ -123,12 +155,14 @@ def _worker_eval(task):
         if pop_total > 0:
             pop_inside = final_pat[cx0-half0:cx0+half0, cy0-half0:cy0+half0].population
             if (pop_total - pop_inside) / pop_total > 0.15:
+                # Don't materialise the exploded final-pattern RLE (it can be
+                # huge for a linear-growth pattern, and we no longer store it —
+                # only the small reproducible seed is saved on the main side).
                 try:
-                    rle_str = final_pat.rle_string()
-                    rle_bb  = list(bb)
+                    rle_bb = list(bb)
                 except Exception:
-                    rle_str = None; rle_bb = None
-                return -2, pop_total, rle_str, rle_bb
+                    rle_bb = None
+                return -2, pop_total, None, rle_bb
 
     return -1, final_pop, None, None
 
@@ -220,6 +254,7 @@ def save_checkpoint(path, state):
                   'depth': nd.depth}
                  for nd in pool.values()],
         'next_nid': _next_nid,
+        'log_path': _log_path,   # so --load can append to this same log
         **state,
     }
     tmp = path + '.tmp'
@@ -328,6 +363,9 @@ parser.add_argument('--stall_timeout',  help='if no worker completes within this
                     'thrashing evaluation and checkpoint+exit gracefully (0=disabled)', default=1800.0, type=float)
 parser.add_argument('--no_mem_clamp',   help='do not auto-clamp --memory to fit physical RAM at startup',
                     default=False, action='store_true')
+parser.add_argument('--allow_concurrent', help='start even if another gliders.py run is already running on this '
+                    'machine (default: refuse, to avoid two runs competing for RAM and causing swap death)',
+                    default=False, action='store_true')
 args = parser.parse_args()
 
 if args.seed is None:
@@ -335,6 +373,27 @@ if args.seed is None:
 random.seed(args.seed)
 np.random.seed(args.seed)
 print(args)
+
+# --- stale / concurrent run check ----------------------------------------
+# Two runs sharing one box each ask for the full --memory budget; together they
+# overcommit RAM, exhaust swap, and the machine thrashes (one main hangs forever
+# in the soft-throttle drain loop waiting for memory that the other won't give
+# back).  Refuse to start if another gliders.py is already running.
+_others = _find_other_gliders()
+if _others:
+    print('\n*** STALE/CONCURRENT RUN CHECK: found {} other gliders.py process(es):'.format(len(_others)))
+    for _pid, _cmd in _others:
+        print('    pid {:>7}  {}'.format(_pid, _cmd[:160]))
+    if not args.allow_concurrent:
+        msg = ('*** Refusing to start: another run is already using this machine\'s RAM, '
+               'which risks swap death.\n'
+               '*** Kill the stale run(s) above (e.g. "kill {}"), or pass '
+               '--allow_concurrent to start anyway.'.format(
+                   ' '.join(str(p) for p, _ in _others)))
+        print(msg)
+        print(msg, file=sys.stderr)
+        sys.exit(2)
+    print('*** --allow_concurrent set: starting anyway (watch memory!).\n')
 
 sess = lifelib.load_rules("b3s23")
 
@@ -367,7 +426,27 @@ lt   = sess.lifetree(memory=min(args.memory, args.main_memory))
 
 if not os.path.exists(args.results):
     os.makedirs(args.results)
-logf = open(os.path.join(args.results, 'log.{}'.format(datetime.datetime.now().isoformat())), 'w')
+
+# Log file: when resuming with --load, append to the checkpoint's original log
+# so chart.py sees one continuous timeline instead of a fresh file per resume.
+_log_path = None
+if args.load:
+    try:
+        with open(args.load, 'rb') as _f:
+            _lp = pickle.load(_f).get('log_path')
+        if _lp and os.path.exists(_lp):
+            _log_path = _lp
+    except Exception as _e:
+        print('LOG could not read log_path from checkpoint:', _e, file=sys.stderr)
+
+if _log_path:
+    logf = open(_log_path, 'a')
+    print('LOG appending to existing log {}'.format(_log_path))
+    print('# RESUMED from {} at {}'.format(args.load, datetime.datetime.now().isoformat()),
+          file=logf)
+else:
+    _log_path = os.path.join(args.results, 'log.{}'.format(datetime.datetime.now().isoformat()))
+    logf = open(_log_path, 'w')
 print('ARGS', args, file=logf)
 
 
@@ -579,11 +658,10 @@ def _eval_inline(vec, parent_lmax):
             pop_inside = final_pat[cx0-half0:cx0+half0, cy0-half0:cy0+half0].population
             if (pop_total - pop_inside) / pop_total > 0.15:
                 try:
-                    rle_str = final_pat.rle_string()
-                    rle_bb  = list(bb)
+                    rle_bb = list(bb)
                 except Exception:
-                    rle_str = None; rle_bb = None
-                return -2, pop_total, rle_str, rle_bb
+                    rle_bb = None
+                return -2, pop_total, None, rle_bb
 
     return -1, final_pop, None, None
 
@@ -746,17 +824,22 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
         if parent_nid in pool:
             pool[parent_nid].failures += 1
         gen_approx = int(max(0, parent_lmax) + 150000)
-        if rle_str is not None and rle_bb is not None:
-            linear_patterns.append({'gen': gen_approx, 'rle': rle_str, 'bb': rle_bb, 'n': n})
         # write the initial seed pattern that produces linear growth (pat holds
         # the rendered mutation), consistent with ATH/BEST/lmax result files
         bb = pat.bounding_box
+        fn = None
         if bb is not None:
             fn = '{}/LINEAR_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
                 args.results, pat.population, gen_approx, args.seed, n)
             pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
                           footer=None, comments=str(args), file_format='rle',
                           save_comments=True)
+        # Record only metadata + the on-disk seed filename in the checkpoint.
+        # Previously the full *exploded* final-pattern RLE (up to ~140 KB each)
+        # was kept here, bloating the pickle and growing main-process memory
+        # without bound — and it was redundant with the reproducible LINEAR_*.rle
+        # seed already written above.
+        linear_patterns.append({'gen': gen_approx, 'bb': rle_bb, 'n': n, 'file': fn})
         log('LINEAR')
 
     elif l > parent_lmax:
@@ -836,6 +919,39 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
 
 
 _executor = None   # set in parallel mode; used by the watchdog to kill workers
+in_flight = {}     # future -> (parent_nid, imut, parent_lmax, action); module-level
+                   # so the watchdog can dump in-flight seeds. Empty in serial mode.
+
+
+def _dump_inflight(tag):
+    """Render and save the SEED of every in-flight candidate as an .rle.
+
+    A pattern that exhausts RAM is, by definition, the one a worker is currently
+    grinding on — it never returns through the normal ATH/BEST/lmax path, so its
+    seed would otherwise be lost when the watchdog kills the run. Seeds are tiny
+    and fully reproducible, so we capture all of them on any watchdog event."""
+    if not in_flight:
+        return
+    dump_pat = lt.pattern()
+    saved = 0
+    for entry in list(in_flight.values()):
+        parent_nid, imut, parent_lmax, action = entry
+        try:
+            render(dump_pat, imut)
+            bb = dump_pat.bounding_box
+            if bb is None:
+                continue
+            fn = '{}/{}_P{:06d}_Lge{:06d}_seed{:09d}_n{:09d}.rle'.format(
+                args.results, tag, dump_pat.population, int(max(0, parent_lmax)),
+                args.seed, n)
+            dump_pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
+                               footer=None, comments=str(args), file_format='rle',
+                               save_comments=True)
+            saved += 1
+        except Exception as e:
+            print('WATCHDOG dump failed:', e, file=sys.stderr)
+    print('WATCHDOG dumped {}/{} in-flight seed(s) as {}_*.rle in {}'.format(
+        saved, len(in_flight), tag, args.results), flush=True)
 
 
 def _save_chkpt_now():
@@ -858,6 +974,12 @@ def _graceful_shutdown(reason, code=1):
         print(msg, file=logf); logf.flush()
     except Exception:
         pass
+    # Capture the seeds of whatever is still in-flight (likely the very pattern
+    # whose unbounded growth triggered this shutdown) before killing the workers.
+    try:
+        _dump_inflight('CRITICAL')
+    except Exception as e:
+        print('WATCHDOG dump error during shutdown:', e, file=sys.stderr)
     _save_chkpt_now()
     # Kill worker subprocesses first so they stop allocating memory immediately.
     if _executor is not None:
@@ -929,7 +1051,7 @@ try:
         ) as executor:
             _executor = executor   # let the watchdog kill workers on shutdown
 
-            in_flight = {}   # future -> (parent_nid, imut, parent_lmax, action)
+            in_flight.clear()   # module-level dict (see _dump_inflight); reset for this run
 
             def _submit_one():
                 if not pool:
@@ -979,6 +1101,10 @@ try:
                     _throttled = True
                     print('MEMWARN MemAvailable low (<{} MB): throttling, draining {} in-flight'
                           .format(args.mem_soft_avail_mb, len(in_flight)), flush=True)
+                    # Save in-flight seeds now: one of these is likely the
+                    # resource-exhausting pattern, and it may push us to CRITICAL
+                    # (and a worker kill) before it ever returns normally.
+                    _dump_inflight('WATCHDOG')
                 elif status is None and _throttled:
                     _throttled = False
                     print('MEMOK  MemAvailable recovered: resuming submission', flush=True)
