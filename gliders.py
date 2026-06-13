@@ -7,7 +7,7 @@ import sys
 import glob
 import re
 import pickle
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor, as_completed, wait, FIRST_COMPLETED
 
 # Redirect C-level fd 2 to /dev/null so lifelib's GC messages (std::cerr) are
 # suppressed.  sys.stderr is re-pointed at the original terminal fd so Python
@@ -22,6 +22,35 @@ import numpy as np ; print('numpy ' + np.__version__)
 import lifelib ; print('lifelib',lifelib.__version__)
 
 np.set_printoptions(linewidth=250)
+
+# ---------------------------------------------------------------------------
+# System memory helpers (Linux /proc) — used by the resilience watchdog so the
+# run degrades gracefully (checkpoint + clean exit) instead of driving the
+# machine into swap death.
+# ---------------------------------------------------------------------------
+def _meminfo():
+    """Return dict of /proc/meminfo values in MB, or {} if unavailable."""
+    out = {}
+    try:
+        with open('/proc/meminfo') as f:
+            for line in f:
+                parts = line.split()
+                if len(parts) >= 2:
+                    # values are in kB
+                    try:
+                        out[parts[0].rstrip(':')] = int(parts[1]) // 1024
+                    except ValueError:
+                        pass
+    except Exception:
+        return {}
+    return out
+
+
+def _mem_avail_mb():
+    """MemAvailable in MB, or None if it can't be read."""
+    mi = _meminfo()
+    return mi.get('MemAvailable')
+
 
 # ---------------------------------------------------------------------------
 # Module-level worker state — populated by _worker_init in each subprocess
@@ -284,6 +313,21 @@ parser.add_argument('--step',       help='advance step size for advance_until_st
 parser.add_argument('--chkpt_save',     help='checkpoint file path', default=None)
 parser.add_argument('--chkpt_interval', help='checkpoint interval (seconds)', default=3600, type=int)
 parser.add_argument('--load',           help='resume from checkpoint file', default=None)
+# --- resilience / overload-protection args ---
+parser.add_argument('--main_memory',    help='GC limit (MB) for the main-process lifetree (renders only; '
+                    'keep small so it does not compete with worker budgets)', default=4000, type=int)
+parser.add_argument('--mem_reserve_mb',  help='RAM (MB) to leave free for OS/Python when clamping --memory at '
+                    'startup', default=8000, type=int)
+parser.add_argument('--mem_min_avail_mb', help='CRITICAL: if MemAvailable drops below this, checkpoint and exit '
+                    'gracefully', default=2500, type=int)
+parser.add_argument('--mem_soft_avail_mb', help='SOFT: if MemAvailable drops below this, stop submitting new work '
+                    'and let in-flight tasks drain so lifetrees can GC', default=6000, type=int)
+parser.add_argument('--mem_check_interval', help='seconds between memory-pressure checks (also bounds the '
+                    'worker-wait so the watchdog runs while workers are busy)', default=2.0, type=float)
+parser.add_argument('--stall_timeout',  help='if no worker completes within this many seconds, assume a stuck/'
+                    'thrashing evaluation and checkpoint+exit gracefully (0=disabled)', default=1800.0, type=float)
+parser.add_argument('--no_mem_clamp',   help='do not auto-clamp --memory to fit physical RAM at startup',
+                    default=False, action='store_true')
 args = parser.parse_args()
 
 if args.seed is None:
@@ -293,11 +337,37 @@ np.random.seed(args.seed)
 print(args)
 
 sess = lifelib.load_rules("b3s23")
-lt   = sess.lifetree(memory=args.memory)
+
+# --- startup memory budget sanity check ----------------------------------
+# Soft GC budget = worker total (args.memory is split across workers, so the
+# sum of worker lifetrees ~= args.memory) + the main-process lifetree.  lifelib
+# routinely overshoots these GC thresholds during a single advance step, so we
+# leave a generous reserve and clamp args.memory to fit physical RAM.
+_mi          = _meminfo()
+_total_ram   = _mi.get('MemTotal')
+_budget      = args.memory + args.main_memory
+if _total_ram:
+    _max_budget = _total_ram - args.mem_reserve_mb
+    print('MEMCHK total_ram {} MB  requested_budget {} MB (workers {} + main {})  reserve {} MB'.format(
+        _total_ram, _budget, args.memory, args.main_memory, args.mem_reserve_mb))
+    if _budget > _max_budget:
+        new_memory = max(1000, _max_budget - args.main_memory)
+        warn = ('WARNING requested lifelib budget {} MB exceeds safe limit {} MB for {} MB RAM'
+                .format(_budget, _max_budget, _total_ram))
+        print(warn)
+        print(warn, file=sys.stderr)
+        if not args.no_mem_clamp:
+            print('MEMCHK clamping --memory {} -> {} MB (use --no_mem_clamp to override)'.format(
+                args.memory, new_memory))
+            args.memory = new_memory
+        else:
+            print('MEMCHK --no_mem_clamp set: proceeding at risk; watchdog still active')
+
+lt   = sess.lifetree(memory=min(args.memory, args.main_memory))
 
 if not os.path.exists(args.results):
     os.makedirs(args.results)
-logf = open('results/log.{}'.format(datetime.datetime.now().isoformat()), 'w')
+logf = open(os.path.join(args.results, 'log.{}'.format(datetime.datetime.now().isoformat())), 'w')
 print('ARGS', args, file=logf)
 
 
@@ -646,8 +716,11 @@ def _make_mutation(node):
             key = random.choice(list(imut_vec.keys()))
             del imut_vec[key]
         else:
-            dx = np.random.normal(0, rad)
-            dy = np.random.normal(0, rad)
+            #dx = np.random.normal(0, rad)
+            #dy = np.random.normal(0, rad)
+            rad = args.xrad
+            dx = np.random.normal(0, args.xrad)
+            dy = np.random.normal(0, args.yrad)
             if args.brownian and imut_vec:
                 ox, oy = random.choice(list(imut_vec.keys()))
                 dx += ox
@@ -672,9 +745,18 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
     if l == -2:
         if parent_nid in pool:
             pool[parent_nid].failures += 1
+        gen_approx = int(max(0, parent_lmax) + 150000)
         if rle_str is not None and rle_bb is not None:
-            gen_approx = int(max(0, parent_lmax) + 150000)
             linear_patterns.append({'gen': gen_approx, 'rle': rle_str, 'bb': rle_bb, 'n': n})
+        # write the initial seed pattern that produces linear growth (pat holds
+        # the rendered mutation), consistent with ATH/BEST/lmax result files
+        bb = pat.bounding_box
+        if bb is not None:
+            fn = '{}/LINEAR_P{:06d}_L{:06d}_seed{:09d}_n{:09d}.rle'.format(
+                args.results, pat.population, gen_approx, args.seed, n)
+            pat.write_rle(fn, header='#CXRLE Pos={},{}\n'.format(bb[0], bb[1]),
+                          footer=None, comments=str(args), file_format='rle',
+                          save_comments=True)
         log('LINEAR')
 
     elif l > parent_lmax:
@@ -753,12 +835,73 @@ def _process_result(l_res, pop_res, rle_str, rle_bb, parent_nid, imut, parent_lm
             log('CHECKPOINT')
 
 
+_executor = None   # set in parallel mode; used by the watchdog to kill workers
+
+
+def _save_chkpt_now():
+    if args.chkpt_save:
+        try:
+            save_checkpoint(args.chkpt_save, {
+                'n': n, 'ath': ath, 'lmax0': lmax0, 'uniq_count': len(uniq),
+                'linear_patterns': linear_patterns})
+        except Exception as e:
+            print('CHKPT save failed during shutdown:', e, file=sys.stderr)
+
+
+def _graceful_shutdown(reason, code=1):
+    """Checkpoint, log a clear error, kill workers, and exit without thrashing."""
+    msg = '*** GRACEFUL SHUTDOWN: {} (n={} avail={} MB) ***'.format(
+        reason, n, _mem_avail_mb())
+    print('\n' + msg, flush=True)
+    print(msg, file=sys.stderr, flush=True)
+    try:
+        print(msg, file=logf); logf.flush()
+    except Exception:
+        pass
+    _save_chkpt_now()
+    # Kill worker subprocesses first so they stop allocating memory immediately.
+    if _executor is not None:
+        try:
+            for p in list(getattr(_executor, '_processes', {}).values()):
+                try:
+                    p.terminate()
+                except Exception:
+                    pass
+        except Exception:
+            pass
+    try:
+        logf.flush()
+    except Exception:
+        pass
+    os._exit(code)   # bypass ProcessPoolExecutor.__exit__(wait=True)
+
+
+def _watchdog_check():
+    """Return 'crit' / 'soft' / None based on current MemAvailable."""
+    avail = _mem_avail_mb()
+    if avail is None:
+        return None
+    if avail < args.mem_min_avail_mb:
+        return 'crit'
+    if avail < args.mem_soft_avail_mb:
+        return 'soft'
+    return None
+
+
 try:
     if args.nworkers == 1:
         # ----- serial mode -----
+        _last_memchk = 0.0
         while True:
             if not pool:
                 print('EMPTY POOL'); break
+
+            now = time.time()
+            if now - _last_memchk >= args.mem_check_interval:
+                _last_memchk = now
+                if _watchdog_check() == 'crit':
+                    _graceful_shutdown('MemAvailable below --mem_min_avail_mb '
+                                       '({} MB)'.format(args.mem_min_avail_mb))
 
             nodes = list(pool.values())
             larr  = np.array([nd.lifespan for nd in nodes])
@@ -784,6 +927,7 @@ try:
                 initializer=_worker_init,
                 initargs=(mem_per_worker, _gliders_serial, args.spacex, args.spacey)
         ) as executor:
+            _executor = executor   # let the watchdog kill workers on shutdown
 
             in_flight = {}   # future -> (parent_nid, imut, parent_lmax, action)
 
@@ -805,15 +949,47 @@ try:
             for _ in range(QUEUE_DEPTH):
                 _submit_one()
 
+            _last_completion = time.time()
+            _throttled       = False
             while True:
                 if not pool:
                     print('EMPTY POOL'); break
                 if not in_flight:
-                    _submit_one(); continue
+                    # Throttled and drained, or pool starved: pause briefly and
+                    # re-check memory before deciding whether to refill.
+                    if _watchdog_check() == 'crit':
+                        _graceful_shutdown('MemAvailable below --mem_min_avail_mb '
+                                           '({} MB)'.format(args.mem_min_avail_mb))
+                    if _watchdog_check() != 'soft':
+                        _submit_one()
+                    else:
+                        time.sleep(args.mem_check_interval)
+                    continue
 
-                # Wait for at least one completion, then drain all ready futures
-                next(as_completed(in_flight))   # blocks until one is done
-                done_futs = [f for f in in_flight if f.done()]
+                # Bounded wait so the watchdog runs even while every worker is busy.
+                done_futs, _ = wait(in_flight, timeout=args.mem_check_interval,
+                                    return_when=FIRST_COMPLETED)
+
+                # --- memory watchdog -------------------------------------------------
+                status = _watchdog_check()
+                if status == 'crit':
+                    _graceful_shutdown('MemAvailable below --mem_min_avail_mb '
+                                       '({} MB)'.format(args.mem_min_avail_mb))
+                if status == 'soft' and not _throttled:
+                    _throttled = True
+                    print('MEMWARN MemAvailable low (<{} MB): throttling, draining {} in-flight'
+                          .format(args.mem_soft_avail_mb, len(in_flight)), flush=True)
+                elif status is None and _throttled:
+                    _throttled = False
+                    print('MEMOK  MemAvailable recovered: resuming submission', flush=True)
+
+                # --- stall watchdog --------------------------------------------------
+                if done_futs:
+                    _last_completion = time.time()
+                elif args.stall_timeout > 0 and (time.time() - _last_completion) > args.stall_timeout:
+                    _graceful_shutdown('no worker completed in {:.0f}s (stuck/thrashing '
+                                       'evaluation)'.format(args.stall_timeout))
+
                 for fut in done_futs:
                     parent_nid, imut, parent_lmax, action = in_flight.pop(fut)
                     try:
@@ -823,7 +999,12 @@ try:
                         l_res, pop_res, rle_str, rle_bb = -1, 0, None, None
                     _process_result(l_res, pop_res, rle_str, rle_bb,
                                     parent_nid, imut, parent_lmax, action)
-                    _submit_one()
+
+                # Refill the pipeline up to QUEUE_DEPTH — unless throttled, in which
+                # case we let in-flight work drain so worker lifetrees can GC.
+                if not _throttled:
+                    while len(in_flight) < QUEUE_DEPTH and pool:
+                        _submit_one()
 
 except KeyboardInterrupt:
     print('\nSTOPPING', flush=True)
