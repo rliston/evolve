@@ -470,18 +470,17 @@ def log(hdr):
 # Glider / primitive definitions
 # ---------------------------------------------------------------------------
 def transform_coords(coords, N=9):
+    # The 8 distinct elements of the dihedral symmetry group (D4). Aliases that
+    # duplicated existing shapes were removed: flip_x(=flip), swap_xy(=transpose),
+    # rcw(=rot90), rccw(=rot270).
     transform_map = {
         "identity":     lambda x, y: (x, y),
         "flip":         lambda x, y: (N - x, y),
-        "flip_x":       lambda x, y: (N - x, y),
         "flip_y":       lambda x, y: (x, N - y),
         "transpose":    lambda x, y: (y, x),
-        "swap_xy":      lambda x, y: (y, x),
         "rot90":        lambda x, y: (y, N - x),
         "rot180":       lambda x, y: (N - x, N - y),
         "rot270":       lambda x, y: (N - y, x),
-        "rcw":          lambda x, y: (y, N - x),
-        "rccw":         lambda x, y: (N - y, x),
         "swap_xy_flip": lambda x, y: (N - y, N - x),
     }
     results = {}
